@@ -92,7 +92,7 @@ model User {
   recoveryMode    Boolean  @default(false)
 
   // Relations
-  token           Token?
+  tokens          Token[]
   petOwner        PetOwner?
   veterinarian    Veterinarian?
   userDevices     UserDevice[]

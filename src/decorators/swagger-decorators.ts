@@ -1,5 +1,7 @@
 import { applyDecorators } from '@nestjs/common'
 import { ApiResponse } from '@nestjs/swagger'
+import { ApiOperation, ApiBody } from '@nestjs/swagger'
+import { LoginDto } from '../dto/login.dto'
 
 export function ApiUnauthorizedResponse() {
   return applyDecorators(
@@ -58,5 +60,43 @@ export function ApiOkResponse(entity?: string) {
       description: `${entity || 'Resource'} retrieved successfully`,
       schema: { type: 'object', properties: { message: { type: 'string' } }, example: { message: `${entity || 'Resource'} retrieved successfully` } },
     }),
+  )
+}
+
+export function ApiLogin() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Login user and return access and refresh tokens' }),
+    ApiBody({
+      description: 'User credentials',
+      type: LoginDto,
+      examples: {
+        example1: {
+          summary: 'Valid credentials',
+          value: {
+            email: 'thiago@example.com',
+            password: '12345678',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Tokens returned successfully',
+      schema: {
+        type: 'object',
+        properties: {
+          accessToken: {
+            type: 'string',
+            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          },
+          refreshToken: {
+            type: 'string',
+            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse(),
+    ApiInternalServerErrorResponse('Failed to login', 'Internal server error while logging in'),
   )
 }

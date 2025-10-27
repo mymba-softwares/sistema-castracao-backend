@@ -11,12 +11,12 @@ export class UserService {
   async create(dto: CreateUserDto) {
   const hashedPassword = await bcrypt.hash(dto.password, 10)
 
-  const { password, ...data } = dto // eslint-disable-line @typescript-eslint/no-unused-vars
+  const { password: _, ...data } = dto 
   const user = await this.prisma.user.create({
     data: { ...data, hashedPassword },
   })
 
-  const { hashedPassword: _, ...safeUser } = user
+  const { hashedPassword: _unused, ...safeUser } = user
   return safeUser
 }
 
@@ -31,9 +31,16 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id } })
     if (!user) throw new NotFoundException('User not found')
         
-    const { hashedPassword: _, ...safeUser } = user  // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { hashedPassword: _, ...safeUser } = user 
     return safeUser
   }
+
+  async findByEmail(email: string) {
+  const user = await this.prisma.user.findUnique({ where: { email } })
+  if (!user) return null
+  return user
+}
+
 
     async update(id: number, dto: UpdateUserDto) {
     const user = await this.prisma.user.findUnique({ where: { id } })
@@ -47,7 +54,7 @@ export class UserService {
     }
 
     const updated = await this.prisma.user.update({ where: { id }, data })
-    const { hashedPassword: _, ...safeUser } = updated  // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { hashedPassword: _, ...safeUser } = updated  
     return safeUser
     }
 
