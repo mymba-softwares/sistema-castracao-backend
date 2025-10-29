@@ -1,48 +1,72 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🐾 Sistema de Gestão de Castração - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST desenvolvida com NestJS para gerenciar o sistema de castração de animais do Projeto Mymba.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Descrição
 
-## Description
+Sistema backend completo para gerenciamento de castrações de animais, incluindo:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- 🔐 Autenticação JWT com múltiplos níveis de acesso
+- 👥 Gestão de usuários (administradores, veterinários, tutores, etc.)
+- 🐕 Cadastro e gerenciamento de animais
+- 📅 Agendamento de consultas e cirurgias
+- 📊 Prontuários médicos eletrônicos
+- 🔔 Sistema de notificações
+- 📈 Logs de auditoria para conformidade LGPD
+
+## 🚀 Tecnologias
+
+- **Framework:** NestJS
+- **Database:** PostgreSQL + Prisma ORM
+- **Autenticação:** JWT (JSON Web Tokens)
+- **Documentação:** Swagger/OpenAPI
+- **Deploy:** Render.com
+
+## 🌐 URLs
+
+- **Produção:** https://sistema-castracao-backend.onrender.com
+- **API Docs (Swagger):** https://sistema-castracao-backend.onrender.com/api
+- **Frontend:** https://sistema-castracao-frontend.vercel.app
 
 ## Project setup
 
 ```bash
-$ npm install
+npm install
+```
+
+## Configure Environment
+
+1. Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` with your database credentials and JWT secrets
+
+3. Run Prisma migrations:
+```bash
+npx prisma migrate dev
 ```
 
 ## Compile and run the project
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
+
+## 📚 Documentation
+
+- **[DEPLOY.md](./DEPLOY.md)** - Guia completo de deploy no Render
+- **[FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md)** - Instruções para integrar com o frontend
+- **[Swagger Docs](http://localhost:3000/api)** - Documentação interativa da API (após iniciar o servidor)
 
 ## Run tests
 
