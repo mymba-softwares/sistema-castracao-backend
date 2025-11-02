@@ -122,73 +122,71 @@ export class PetOwnerService {
   }
 
   async updatePetOwner(userId: number, dto: UpdatePetOwnerDto) {
-  const existingUser = await this.prisma.user.findUnique({
-    where: { id: userId },
-  });
+    const existingUser = await this.findPetOwnerById(userId);
 
-  if (!existingUser) {
-    throw new NotFoundException(`User with ID ${userId} not found.`);
-  }
-
-  if (dto.email || dto.cpf) {
-    const conflictingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: dto.email }, { cpf: dto.cpf }],
-        id: { not: userId },
-      },
-    });
-
-    if (conflictingUser) {
-      throw new ConflictException('Email or CPF already in use by another user.');
+    if (!existingUser) {
+      throw new NotFoundException(`User with ID ${userId} not found.`);
     }
-  }
 
-  const {
-    fullAddress,
-    email,
-    password,
-    phone,
-    completeName,
-    cpf
-  } = dto;
+    if (dto.email || dto.cpf) {
+      const conflictingUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [{ email: dto.email }, { cpf: dto.cpf }],
+          id: { not: userId },
+        },
+      });
 
-  const userDataToUpdate: any = {};
-
-  if (email) userDataToUpdate.email = email;
-  if (phone) userDataToUpdate.phone = phone;
-  if (completeName) userDataToUpdate.completeName = completeName;
-  if (cpf) userDataToUpdate.cpf = cpf;
-
-  if (password) {
-    userDataToUpdate.hashedPassword = await bcrypt.hash(password, 10);
-  }
-
-  const petOwnerDataToUpdate: any = {};
-
-  if (fullAddress) petOwnerDataToUpdate.fullAddress = fullAddress;
-
-  try {
-    await this.prisma.$transaction(async (tx) => {
-      if (Object.keys(userDataToUpdate).length > 0) {
-        await tx.user.update({
-          where: { id: userId },
-          data: userDataToUpdate,
-        });
+      if (conflictingUser) {
+        throw new ConflictException('Email or CPF already in use by another user.');
       }
+    }
 
-      if (Object.keys(petOwnerDataToUpdate).length > 0) {
-        await tx.petOwner.update({
-          where: { userId: userId },
-          data: petOwnerDataToUpdate,
-        });
-      }
-    });
-  } catch (error) {
-    throw new ConflictException(`Erro ao atualizar dados: ${error.message}`);
+    const {
+      fullAddress,
+      email,
+      password,
+      phone,
+      completeName,
+      cpf
+    } = dto;
+
+    const userDataToUpdate: any = {};
+
+    if (email) userDataToUpdate.email = email;
+    if (phone) userDataToUpdate.phone = phone;
+    if (completeName) userDataToUpdate.completeName = completeName;
+    if (cpf) userDataToUpdate.cpf = cpf;
+
+    if (password) {
+      userDataToUpdate.hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    const petOwnerDataToUpdate: any = {};
+
+    if (fullAddress) petOwnerDataToUpdate.fullAddress = fullAddress;
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        if (Object.keys(userDataToUpdate).length > 0) {
+          await tx.user.update({
+            where: { id: userId },
+            data: userDataToUpdate,
+          });
+        }
+
+        if (Object.keys(petOwnerDataToUpdate).length > 0) {
+          await tx.petOwner.update({
+            where: { userId: userId },
+            data: petOwnerDataToUpdate,
+          });
+        }
+      });
+    } catch (error) {
+      throw new ConflictException(`Erro ao atualizar dados: ${error.message}`);
+    }
+
+    return this.findPetOwnerById(userId);
   }
-
-  return this.findPetOwnerById(userId);
-}
 
   async deletePetOwner(userId: number) {
     const user = await this.prisma.user.findUnique({
@@ -216,7 +214,7 @@ export class PetOwnerService {
         animals: true,
       },
     });
-    
+
     if (!petOwner) {
       throw new NotFoundException('Pet owner not found');
     }

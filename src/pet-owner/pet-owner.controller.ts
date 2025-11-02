@@ -118,7 +118,7 @@ export class PetOwnerController {
   }
 
   @Patch(':id')
-  @Roles(Role.administrator, Role.semas, Role.receptionist, Role.petOwner)
+  @Roles(Role.administrator, Role.semas, Role.receptionist)
   @ApiOperation({
     summary: 'Update a pet owner',
   })
@@ -133,7 +133,7 @@ export class PetOwnerController {
   }
 
   @Delete(':id')
-  @Roles(Role.administrator, Role.semas, Role.petOwner)
+  @Roles(Role.administrator, Role.semas)
   @ApiOperation({
     summary: 'Delete a pet owner',
   })
