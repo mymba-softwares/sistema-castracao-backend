@@ -68,6 +68,22 @@ export class PetOwnerService {
     return petOwner;
   }
 
+  async findPetOwnerByEmail(email: string) {
+    const petOwner = await this.prisma.petOwner.findFirst({
+      where: {
+        user: {
+          email: email,
+        },
+      },
+    });
+
+    if (!petOwner) {
+      throw new NotFoundException('Pet owner not found');
+    }
+
+    return petOwner;
+  }
+
   async createPetOwner(createPetOwnerDto: CreatePetOwnerDto) {
     const existingUser = await this.prisma.user.findFirst({
       where: {

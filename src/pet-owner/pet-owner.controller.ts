@@ -117,6 +117,20 @@ export class PetOwnerController {
     return this.petOwnerService.findPetOwnerById(Number(id));
   }
 
+  @Get('email/:email')
+  @Roles(Role.administrator, Role.semas, Role.receptionist)
+  @ApiOperation({
+    summary: 'Get a pet owner by email',
+  })
+  @ApiParam({ name: 'email', type: String })
+  @ApiOkResponse('PetOwner')
+  @ApiNotFoundResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+
+  findOneByEmail(@Param('email') email: string) {
+    return this.petOwnerService.findPetOwnerByEmail(email);
+  }
+
   @Patch(':id')
   @Roles(Role.administrator, Role.semas, Role.receptionist)
   @ApiOperation({
