@@ -48,18 +48,14 @@ export class AnimalsService {
     }
 
     try {
-      const newAnimal = await this.prisma.animal.create({
-        data: {
-          name: dto.name,
-          species: dto.species as Species,
-          breed: dto.breed,
-          estimatedAge: dto.estimatedAge,
-          sizeWeight: dto.sizeWeight,
-          gender: dto.gender as Gender,
-          microchipNumber: microchip,
-          petOwnerId: dto.petOwnerId,
-        },
-      });
+      const data = {
+        ...dto,
+        microchipNumber: microchip,
+        species: dto.species as Species,
+        gender: dto.gender as Gender, 
+      };
+
+      const newAnimal = await this.prisma.animal.create({ data });
 
       return newAnimal;
     } catch (error) {
