@@ -17,9 +17,10 @@ import { Role } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { AuthUser } from 'src/interfaces/auth-user';
 import type { Request } from 'express';
+import { access } from 'fs';
 
 @ApiTags('PetOwners (Responsáveis).')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('pet-owner')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PetOwnerController {

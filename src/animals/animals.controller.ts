@@ -17,7 +17,7 @@ import { Roles } from 'src/decorators/role-decorator';
 import { Role } from '@prisma/client';
 
 @ApiTags('Animals (Animais).')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('animals')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AnimalsController {

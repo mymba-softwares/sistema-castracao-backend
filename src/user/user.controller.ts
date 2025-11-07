@@ -17,7 +17,7 @@ import { Roles } from '../decorators/role-decorator'
 import { $Enums } from '../../generated/prisma-client'
 
 @ApiTags('users')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
