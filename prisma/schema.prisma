@@ -1,307 +1,307 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-// Database for the Mymba Project - Animal Sterilization Management System
+  // This is your Prisma schema file,
+  // learn more about it in the docs: https://pris.ly/d/prisma-schema
+  // Database for the Mymba Project - Animal Sterilization Management System
 
-generator client {
-  provider = "prisma-client-js"
-}
+  generator client {
+    provider = "prisma-client-js"
+  }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+  datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
 
-// ==================== ENUMS ====================
+  // ==================== ENUMS ====================
 
-enum Role {
-  administrator // Coordination/Admin (UFRPE)
-  semas         // SEMAS Team (registers responsible persons)
-  veterinarian  // Medical Team (performs procedures)
-  receptionist  // HVU Reception (schedules follow-ups, etc.)
-  petOwner      // Animal Owner (online scheduling)
-  student
-}
+  enum Role {
+    administrator // Coordination/Admin (UFRPE)
+    semas         // SEMAS Team (registers responsible persons)
+    veterinarian  // Medical Team (performs procedures)
+    receptionist  // HVU Reception (schedules follow-ups, etc.)
+    petOwner      // Animal Owner (online scheduling)
+    student
+  }
 
-enum Species {
-  canine
-  feline
-}
+  enum Species {
+    canine
+    feline
+  }
 
-enum Gender {
-  male
-  female
-}
+  enum Gender {
+    male
+    female
+  }
 
-enum ServiceType {
-  triage
-  castrationSurgery
-  postOperative
-}
+  enum ServiceType {
+    triage
+    castrationSurgery
+    postOperative
+  }
 
-enum AppointmentStatus {
-  scheduled // Booked by the pet owner
-  confirmed // Can be used if there is a confirmation step
-  completed // Animal was attended to
-  canceled  // By the user or admin
-  absent    // Patient did not show up
-}
+  enum AppointmentStatus {
+    scheduled // Booked by the pet owner
+    confirmed // Can be used if there is a confirmation step
+    completed // Animal was attended to
+    canceled  // By the user or admin
+    absent    // Patient did not show up
+  }
 
-enum ClinicalRecordType {
-  triage
-  surgery
-  followUp
-}
+  enum ClinicalRecordType {
+    triage
+    surgery
+    followUp
+  }
 
-enum SurgeryType {
-  orchiectomy       // Male
-  ovariohysterectomy // Female
-}
+  enum SurgeryType {
+    orchiectomy       // Male
+    ovariohysterectomy // Female
+  }
 
-enum NotificationChannel {
-  push     // Notification via App
-  email    // Messaging service
-  whatsapp // Messaging service
-}
+  enum NotificationChannel {
+    push     // Notification via App
+    email    // Messaging service
+    whatsapp // Messaging service
+  }
 
-enum Target {
-  all
-  petOwners
-  semas
-  veterinarians
-  receptionists
-}
+  enum Target {
+    all
+    petOwners
+    semas
+    veterinarians
+    receptionists
+  }
 
-enum LogType {
-  info
-  warning
-  error
-  security
-  audit // To track who did what
-}
+  enum LogType {
+    info
+    warning
+    error
+    security
+    audit // To track who did what
+  }
 
-model User {
-  id              Int      @id @default(autoincrement())
-  role            Role
-  email           String   @unique
-  hashedPassword  String
-  completeName    String
-  cpf             String   @unique // Used for login for all users
-  phone           String   // Essential for notifications
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  recoveryMode    Boolean  @default(false)
+  model User {
+    id              Int      @id @default(autoincrement())
+    role            Role
+    email           String   @unique
+    hashedPassword  String
+    completeName    String
+    cpf             String   @unique // Used for login for all users
+    phone           String   // Essential for notifications
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    recoveryMode    Boolean  @default(false)
 
-  // Relations
-  tokens          Token[]
-  petOwner        PetOwner?
-  veterinarian    Veterinarian?
-  userDevices     UserDevice[]
-  notifications   Notification[]
-  bulletins       Bulletin[]
-  systemLogs      SystemLog[]
+    // Relations
+    tokens          Token[]
+    petOwner        PetOwner?
+    veterinarian    Veterinarian?
+    userDevices     UserDevice[]
+    notifications   Notification[]
+    bulletins       Bulletin[]
+    systemLogs      SystemLog[]
 
-  @@map("users")
-}
+    @@map("users")
+  }
 
-// Authentication tokens (default model provided).
-model Token {
-  id         Int     @id @default(autoincrement())
-  userId     Int     @unique
-  jwt        String? @unique
-  refreshJwt String? @unique
+  // Authentication tokens (default model provided).
+  model Token {
+    id         Int     @id @default(autoincrement())
+    userId     Int     @unique
+    jwt        String? @unique
+    refreshJwt String? @unique
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("tokens")
-}
+    @@map("tokens")
+  }
 
-// ==================== ROLE SPECIALIZATION ====================
+  // ==================== ROLE SPECIALIZATION ====================
 
-// Specific data for the animal's owner.
-// The address is geocoded to generate the heatmap.
-model PetOwner {
-  id          Int    @id @default(autoincrement())
-  userId      Int    @unique
-  fullAddress String // Source for RF08
+  // Specific data for the animal's owner.
+  // The address is geocoded to generate the heatmap.
+  model PetOwner {
+    id          Int    @id @default(autoincrement())
+    userId      Int    @unique
+    fullAddress String // Source for RF08
 
-  // Relations
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  animals          Animal[]
-  appointments     Appointment[]
-  commitmentTerms  CommitmentTerm[]
+    // Relations
+    user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    animals          Animal[]
+    appointments     Appointment[]
+    commitmentTerms  CommitmentTerm[]
 
-  @@map("petOwners")
-}
+    @@map("petOwners")
+  }
 
-// Stores the record of the signed commitment term
-model CommitmentTerm {
-  id            Int      @id @default(autoincrement())
-  petOwnerId    Int
-  signatureDate DateTime @default(now())
-  documentUrl   String?  // URL of the signed commitment term PDF/image
+  // Stores the record of the signed commitment term
+  model CommitmentTerm {
+    id            Int      @id @default(autoincrement())
+    petOwnerId    Int
+    signatureDate DateTime @default(now())
+    documentUrl   String?  // URL of the signed commitment term PDF/image
 
-  // Relations
-  petOwner PetOwner @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
+    // Relations
+    petOwner PetOwner @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
 
-  @@map("commitmentTerms")
-}
+    @@map("commitmentTerms")
+  }
 
-model Veterinarian {
-  id      Int     @id @default(autoincrement())
-  userId  Int     @unique
-  crmv    String? @unique // Regional Council of Veterinary Medicine
-  active  Boolean @default(true)
+  model Veterinarian {
+    id      Int     @id @default(autoincrement())
+    userId  Int     @unique
+    crmv    String? @unique // Regional Council of Veterinary Medicine
+    active  Boolean @default(true)
 
-  // Relations
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clinicalRecords ClinicalRecord[]
+    // Relations
+    user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    clinicalRecords ClinicalRecord[]
 
-  @@map("veterinarians")
-}
+    @@map("veterinarians")
+  }
 
-model Animal {
-  id              Int     @id @default(autoincrement())
-  petOwnerId      Int
-  name            String?
-  species         Species
-  gender          Gender
-  estimatedAge    String
-  sizeWeight      String
-  breed           String?
-  microchipNumber String? @unique
+  model Animal {
+    id              Int     @id @default(autoincrement())
+    petOwnerId      Int
+    name            String?
+    species         Species
+    gender          Gender
+    estimatedAge    String
+    sizeWeight      String
+    breed           String?
+    microchipNumber String? @unique
 
-  // Relations
-  petOwner      PetOwner       @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
-  appointments  Appointment[]
-  medicalRecord MedicalRecord?
+    // Relations
+    petOwner      PetOwner       @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
+    appointments  Appointment[]
+    medicalRecord MedicalRecord?
 
-  @@map("animals")
-}
+    @@map("animals")
+  }
 
-model Appointment {
-  id          Int               @id @default(autoincrement())
-  animalId    Int
-  petOwnerId  Int
-  serviceType ServiceType?
-  startTime   DateTime // Exact date and time of the appointment
-  endTime     DateTime // End date and time
-  status      AppointmentStatus @default(scheduled)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  notes       String?           // Observations by the owner when scheduling
+  model Appointment {
+    id          Int               @id @default(autoincrement())
+    animalId    Int
+    petOwnerId  Int
+    serviceType ServiceType?
+    startTime   DateTime // Exact date and time of the appointment
+    endTime     DateTime // End date and time
+    status      AppointmentStatus @default(scheduled)
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+    notes       String?           // Observations by the owner when scheduling
 
-  // Relations
-  animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  petOwner        PetOwner         @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
-  clinicalRecords ClinicalRecord[]
+    // Relations
+    animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
+    petOwner        PetOwner         @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
+    clinicalRecords ClinicalRecord[]
 
-  @@map("appointments")
-}
+    @@map("appointments")
+  }
 
-// ==================== CLINICAL LOGIC ====================
+  // ==================== CLINICAL LOGIC ====================
 
-// The unique medical record for each animal in the project.
-model MedicalRecord {
-  id              Int      @id @default(autoincrement())
-  animalId        Int      @unique
-  microchipNumber String?  @unique // Entered after surgery
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  // The unique medical record for each animal in the project.
+  model MedicalRecord {
+    id              Int      @id @default(autoincrement())
+    animalId        Int      @unique
+    microchipNumber String?  @unique // Entered after surgery
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
 
-  // Relations
-  animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  clinicalRecords ClinicalRecord[]
+    // Relations
+    animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
+    clinicalRecords ClinicalRecord[]
 
-  @@map("medicalRecords")
-}
+    @@map("medicalRecords")
+  }
 
-// Each medical event (triage, surgery, follow-up) generates a record in the medical record.
-model ClinicalRecord {
-  id              Int                 @id @default(autoincrement())
-  medicalRecordId Int
-  appointmentId   Int?                // Appointment that generated this record
-  veterinarianId  Int                 // Who performed the procedure
-  type            ClinicalRecordType
-  treatmentDate   DateTime            @default(now())
-  
-  // Triage Fields (RF03.2)
-  fitForSurgery   Boolean?            // Fit for surgery result
-  
-  // Surgery Fields (RF03.3)
-  surgeryType     SurgeryType?        // Type of procedure performed
-  
-  observations    String?             // General field for veterinarian notes
-  instructions    String?             // Field for prescriptions/instructions (RF06.3)
+  // Each medical event (triage, surgery, follow-up) generates a record in the medical record.
+  model ClinicalRecord {
+    id              Int                 @id @default(autoincrement())
+    medicalRecordId Int
+    appointmentId   Int?                // Appointment that generated this record
+    veterinarianId  Int                 // Who performed the procedure
+    type            ClinicalRecordType
+    treatmentDate   DateTime            @default(now())
+    
+    // Triage Fields (RF03.2)
+    fitForSurgery   Boolean?            // Fit for surgery result
+    
+    // Surgery Fields (RF03.3)
+    surgeryType     SurgeryType?        // Type of procedure performed
+    
+    observations    String?             // General field for veterinarian notes
+    instructions    String?             // Field for prescriptions/instructions (RF06.3)
 
-  // Relations
-  medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
-  appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  veterinarian  Veterinarian  @relation(fields: [veterinarianId], references: [id], onDelete: Restrict)
+    // Relations
+    medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+    appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+    veterinarian  Veterinarian  @relation(fields: [veterinarianId], references: [id], onDelete: Restrict)
 
-  @@map("clinicalRecords")
-}
+    @@map("clinicalRecords")
+  }
 
-model UserDevice {
-  id           Int      @id @default(autoincrement())
-  userId       Int
-  fcmToken     String
-  deviceInfo   String?
-  createdAt    DateTime @default(now())
-  lastActiveAt DateTime @updatedAt
+  model UserDevice {
+    id           Int      @id @default(autoincrement())
+    userId       Int
+    fcmToken     String
+    deviceInfo   String?
+    createdAt    DateTime @default(now())
+    lastActiveAt DateTime @updatedAt
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("userDevices")
-}
+    @@map("userDevices")
+  }
 
-// Log of notifications (reminders, confirmations, instructions) sent to pet owners.
-model Notification {
-  id        Int                 @id @default(autoincrement())
-  userId    Int                 // The pet owner's userId
-  title     String
-  message   String
-  read      Boolean             @default(false)
-  channel   NotificationChannel @default(push)
-  metadata  Json?               // e.g., { "appointmentId": 123 }
-  createdAt DateTime            @default(now())
+  // Log of notifications (reminders, confirmations, instructions) sent to pet owners.
+  model Notification {
+    id        Int                 @id @default(autoincrement())
+    userId    Int                 // The pet owner's userId
+    title     String
+    message   String
+    read      Boolean             @default(false)
+    channel   NotificationChannel @default(push)
+    metadata  Json?               // e.g., { "appointmentId": 123 }
+    createdAt DateTime            @default(now())
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("notifications")
-}
+    @@map("notifications")
+  }
 
-// General communications from the administration (standard model).
-model Bulletin {
-  id              Int      @id @default(autoincrement())
-  createdByUserId Int      // Admin who created it
-  title           String?
-  message         String
-  targetRoles     Target   @default(all)
-  createdAt       DateTime @default(now())
+  // General communications from the administration (standard model).
+  model Bulletin {
+    id              Int      @id @default(autoincrement())
+    createdByUserId Int      // Admin who created it
+    title           String?
+    message         String
+    targetRoles     Target   @default(all)
+    createdAt       DateTime @default(now())
 
-  // Relations
-  createdBy User @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+    // Relations
+    createdBy User @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
 
-  @@map("bulletins")
-}
+    @@map("bulletins")
+  }
 
-// Audit logs (standard model). Essential for LGPD.
-model SystemLog {
-  id          Int      @id @default(autoincrement())
-  userId      Int?     // Who performed the action
-  targetTable String   // Ex: 'appointments', 'medicalRecords'
-  targetId    Int      // ID of the affected record
-  action      String   // 'create', 'update', 'delete'
-  description String?
-  type        LogType
-  originIp    String?
-  createdAt   DateTime @default(now())
+  // Audit logs (standard model). Essential for LGPD.
+  model SystemLog {
+    id          Int      @id @default(autoincrement())
+    userId      Int?     // Who performed the action
+    targetTable String   // Ex: 'appointments', 'medicalRecords'
+    targetId    Int      // ID of the affected record
+    action      String   // 'create', 'update', 'delete'
+    description String?
+    type        LogType
+    originIp    String?
+    createdAt   DateTime @default(now())
 
-  // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+    // Relations
+    user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@map("systemLogs")
-}
+    @@map("systemLogs")
+  }

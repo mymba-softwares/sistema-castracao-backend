@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards } from '@nestjs/common'
 import { UserService } from './user.service'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { UpdateUserDto } from '../dto/update-user.dto'
@@ -10,15 +10,22 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
 } from '../decorators/swagger-decorators'
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger'
+import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../decorators/role-decorator'
+import { $Enums } from '../../generated/prisma-client'
 
 @ApiTags('users')
+@ApiBearerAuth('access-token')
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user' })
+  @Roles($Enums.Role.administrator)
+  @ApiOperation({ summary: 'Create a new user (Admin only)' })
   @ApiCreatedResponse('User')
   @ApiInternalServerErrorResponse()
 
@@ -27,6 +34,7 @@ export class UserController {
   }
 
   @Get()
+  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.receptionist)
   @ApiOperation({ summary: 'Get all users' })
   @ApiOkResponse('User')
   @ApiInternalServerErrorResponse()
@@ -36,6 +44,7 @@ export class UserController {
   }
 
   @Get(':id')
+  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse('User')

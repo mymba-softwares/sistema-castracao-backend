@@ -22,11 +22,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    
-    const user = await this.usersService.findById(payload.sub)
-    if (!user) {
-      throw new UnauthorizedException({ message: 'Usuario nao encontrado' })
-    }
+    let user: Awaited<ReturnType<UserService['findById']>> 
+      try {
+          user = await this.usersService.findById(Number(payload.sub))
+      } catch {
+          throw new UnauthorizedException(
+              'Erro interno ao buscar usuário',
+          )
+      }
     return user
   }
 }
