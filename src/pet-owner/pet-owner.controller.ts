@@ -34,8 +34,9 @@ export class PetOwnerController {
   @ApiCreatedResponse('PetOwner')
   @ApiInternalServerErrorResponse()
 
-  create(@Body() dto: CreatePetOwnerDto) {
-    return this.petOwnerService.createPetOwner(dto);
+    create(@Body() dto: CreatePetOwnerDto, @Req() req: Request) {
+    const user = req.user as AuthUser;
+    return this.petOwnerService.createPetOwner(user.id, dto);
   }
 
   //Rotas para PetOwner logado
@@ -63,21 +64,21 @@ export class PetOwnerController {
     return this.petOwnerService.findAnimalsByPetOwnerId(user.id);
   }
 
-  @Patch('me')
-  @Roles(Role.petOwner)
-  @ApiOperation({
-    summary: 'Update profile of the currently logged-in PetOwner',
-  })
-  @ApiOkResponse('PetOwner')
-  @ApiNotFoundResponse('PetOwner')
+  // @Patch('me')
+  // @Roles(Role.petOwner)
+  // @ApiOperation({
+  //   summary: 'Update profile of the currently logged-in PetOwner',
+  // })
+  // @ApiOkResponse('PetOwner')
+  // @ApiNotFoundResponse('PetOwner')
 
-  updateMyProfile(
-    @Req() req: Request,
-    @Body() dto: UpdatePetOwnerDto,
-  ) {
-    const user = req.user as AuthUser;
-    return this.petOwnerService.updatePetOwner(user.id, dto);
-  }
+  // updateMyProfile(
+  //   @Req() req: Request,
+  //   @Body() dto: UpdatePetOwnerDto,
+  // ) {
+  //   const user = req.user as AuthUser;
+  //   return this.petOwnerService.updatePetOwner(user.id, dto);
+  // }
 
   @Delete('me')
   @Roles(Role.petOwner)
@@ -132,20 +133,20 @@ export class PetOwnerController {
     return this.petOwnerService.findPetOwnerByEmail(email);
   }
 
-  @Patch(':id')
-  @Roles(Role.administrator, Role.semas, Role.receptionist)
-  @ApiOperation({
-    summary: 'Update a pet owner',
-  })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiOkResponse('PetOwner')
-  @ApiNotFoundResponse('PetOwner')
-  @ApiUnauthorizedResponse()
-  @ApiForbiddenResponse()
+  // @Patch(':id')
+  // @Roles(Role.administrator, Role.semas, Role.receptionist)
+  // @ApiOperation({
+  //   summary: 'Update a pet owner',
+  // })
+  // @ApiParam({ name: 'id', type: Number })
+  // @ApiOkResponse('PetOwner')
+  // @ApiNotFoundResponse('PetOwner')
+  // @ApiUnauthorizedResponse()
+  // @ApiForbiddenResponse()
 
-  update(@Param('id') id: number, @Body() dto: UpdatePetOwnerDto) {
-    return this.petOwnerService.updatePetOwner(Number(id), dto);
-  }
+  // update(@Param('id') id: number, @Body() dto: UpdatePetOwnerDto) {
+  //   return this.petOwnerService.updatePetOwner(Number(id), dto);
+  // }
 
   @Delete(':id')
   @Roles(Role.administrator, Role.semas)

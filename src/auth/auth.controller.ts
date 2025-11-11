@@ -24,8 +24,6 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(201)
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('administrator')
   async register(@Body() dto: CreateUserDto) {
     return this.authService.register(dto)

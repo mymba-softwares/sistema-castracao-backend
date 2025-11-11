@@ -5,5 +5,6 @@ import { PetOwnerController } from './pet-owner.controller';
 @Module({
   controllers: [PetOwnerController],
   providers: [PetOwnerService],
+  exports: [PetOwnerService],
 })
 export class PetOwnerModule {}
