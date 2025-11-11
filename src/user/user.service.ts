@@ -41,6 +41,12 @@ export class UserService {
   return user
 }
 
+async findByCpf(cpf: string) {
+  const user = await this.prisma.user.findUnique({ where: { cpf } })
+  if (!user) return null
+  return user
+}
+
 
     async update(id: number, dto: UpdateUserDto) {
     const user = await this.prisma.user.findUnique({ where: { id } })
