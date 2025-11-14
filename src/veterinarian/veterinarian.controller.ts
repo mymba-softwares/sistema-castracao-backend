@@ -16,13 +16,13 @@ import {
   GetAllVeterinariansApiResponsesOperation,
   GetVeterinarianByIdApiResponsesOperation,
 } from './veterinarian.swagger'
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/decorators/role-decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../decorators/role-decorator';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { AuthUser } from 'src/interfaces/auth-user';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthUser } from '../interfaces/auth-user';
 import type { Request } from 'express';
-import { CreateUserDto } from 'src/dto/create-user.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
 
 @ApiTags('Veterinarians')
 @ApiBearerAuth('access-token')
@@ -50,15 +50,15 @@ export class VeterinarianController {
     return this.veterinarianService.findVeterinarianById(user.id);
   }
 
-  // @Patch('me')
-  // @Roles(Role.veterinarian)
-  // @ApiOperation({ summary: 'Update profile of the currently logged-in Veterinarian' })
-  // @ApiOkResponse('Veterinarian')
-  // @ApiNotFoundResponse('Veterinarian')
-  // updateMyProfile(@Req() req: Request, @Body() dto: UpdateVeterinarianDto) {
-  //   const user = req.user as AuthUser;
-  //   return this.veterinarianService.updateVeterinarian(user.id, dto);
-  // }
+  @Patch('me')
+  @Roles(Role.veterinarian)
+  @ApiOperation({ summary: 'Update profile of the currently logged-in Veterinarian' })
+  @ApiOkResponse('Veterinarian')
+  @ApiNotFoundResponse('Veterinarian')
+  updateMyProfile(@Req() req: Request, @Body() dto: UpdateVeterinarianDto) {
+    const user = req.user as AuthUser;
+    return this.veterinarianService.updateVeterinarian(user.id, dto);
+  }
 
   @Delete('me')
   @Roles(Role.veterinarian)
@@ -88,14 +88,14 @@ export class VeterinarianController {
     return this.veterinarianService.findVeterinarianById(Number(id));
   }
 
-  // @Patch(':id')
-  // @Roles(Role.administrator)
-  // @ApiOperation({ summary: 'Update a veterinarian by ID' })
-  // @ApiOkResponse('Veterinarian')
-  // @ApiNotFoundResponse('Veterinarian')
-  // update(@Param('id') id: string, @Body() dto: UpdateVeterinarianDto) {
-  //   return this.veterinarianService.updateVeterinarian(Number(id), dto);
-  // }
+  @Patch(':id')
+  @Roles(Role.administrator)
+  @ApiOperation({ summary: 'Update a veterinarian by ID' })
+  @ApiOkResponse('Veterinarian')
+  @ApiNotFoundResponse('Veterinarian')
+  update(@Param('id') id: string, @Body() dto: UpdateVeterinarianDto) {
+    return this.veterinarianService.updateVeterinarian(Number(id), dto);
+  }
 
   @Delete(':id')
   @Roles(Role.administrator)

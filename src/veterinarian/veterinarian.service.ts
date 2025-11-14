@@ -1,10 +1,10 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateVeterinarianDto } from '../dto/create-veterinarian.dto';
 import { UpdateVeterinarianDto } from '../dto/update-veterinarian.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
-import { CreateUserDto } from 'src/dto/create-user.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
 
 @Injectable()
 export class VeterinarianService {
@@ -60,6 +60,14 @@ export class VeterinarianService {
 
 async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
   try {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const vet = await this.prisma.veterinarian.create({
       data: {
         userId,
@@ -82,62 +90,65 @@ async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
 
     return vet;
   } catch (error) {
+    if(error instanceof NotFoundException) {
+      throw error;
+    }
     throw new ConflictException(`Error creating veterinarian: ${error.message}`);
   }
 }
 
-  // async updateVeterinarian(userId: number, dto: UpdateVeterinarianDto) {
-  //   const existingVet = await this.findVeterinarianById(userId);
-  //   if (!existingVet) {
-  //     throw new NotFoundException(`Veterinarian with ID ${userId} not found`);
-  //   }
+  async updateVeterinarian(userId: number, dto: UpdateVeterinarianDto) {
+    const existingVet = await this.findVeterinarianById(userId);
+    if (!existingVet) {
+      throw new NotFoundException(`Veterinarian with ID ${userId} not found`);
+    }
 
-  //   if (dto.email || dto.cpf) {
-  //     const conflictingUser = await this.prisma.user.findFirst({
-  //       where: {
-  //         OR: [{ email: dto.email }, { cpf: dto.cpf }],
-  //         id: { not: userId },
-  //       },
-  //     });
-  //     if (conflictingUser) {
-  //       throw new ConflictException('Email or CPF already in use by another user.');
-  //     }
-  //   }
+    if (dto.email || dto.cpf) {
+      const conflictingUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [{ email: dto.email }, { cpf: dto.cpf }],
+          id: { not: userId },
+        },
+      });
+      if (conflictingUser) {
+        throw new ConflictException('Email or CPF already in use by another user.');
+      }
+    }
 
-  //   const { crmv, active, email, password, phone, completeName, cpf } = dto;
+    const { crmv, active, email, password, phone, completeName, cpf } = dto;
 
-  //   const userDataToUpdate: any = {};
-  //   if (email) userDataToUpdate.email = email;
-  //   if (phone) userDataToUpdate.phone = phone;
-  //   if (completeName) userDataToUpdate.completeName = completeName;
-  //   if (cpf) userDataToUpdate.cpf = cpf;
-  //   if (password) userDataToUpdate.hashedPassword = await bcrypt.hash(password, 10);
+    const userDataToUpdate: any = {};
+    if (email) userDataToUpdate.email = email;
+    if (phone) userDataToUpdate.phone = phone;
+    if (completeName) userDataToUpdate.completeName = completeName;
+    if (cpf) userDataToUpdate.cpf = cpf;
+    if (password) userDataToUpdate.hashedPassword = await bcrypt.hash(password, 10);
 
-  //   const veterinarianDataToUpdate: any = {};
-  //   if (crmv) veterinarianDataToUpdate.crmv = crmv;
-  //   if (typeof active === 'boolean') veterinarianDataToUpdate.active = active;
+    const veterinarianDataToUpdate: any = {};
+    if (crmv) veterinarianDataToUpdate.crmv = crmv;
+    if (typeof active === 'boolean') veterinarianDataToUpdate.active = active;
 
-  //   try {
-  //     await this.prisma.$transaction(async (tx) => {
-  //       if (Object.keys(userDataToUpdate).length > 0) {
-  //         await tx.user.update({
-  //           where: { id: userId },
-  //           data: userDataToUpdate,
-  //         });
-  //       }
-  //       if (Object.keys(veterinarianDataToUpdate).length > 0) {
-  //         await tx.veterinarian.update({
-  //           where: { userId },
-  //           data: veterinarianDataToUpdate,
-  //         });
-  //       }
-  //     });
-  //   } catch (error) {
-  //     throw new ConflictException(`Error updating veterinarian: ${error.message}`);
-  //   }
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        if (Object.keys(userDataToUpdate).length > 0) {
+          await tx.user.update({
+            where: { id: userId },
+            data: userDataToUpdate,
+          });
+        }
+        if (Object.keys(veterinarianDataToUpdate).length > 0) {
+          await tx.veterinarian.update({
+            where: { userId },
+            data: veterinarianDataToUpdate,
+          });
+        }
+      });
+    } catch (error) {
+      throw new ConflictException(`Error updating veterinarian: ${error.message}`);
+    }
 
-  //   return this.findVeterinarianById(userId);
-  // }
+    return this.findVeterinarianById(userId);
+  }
 
   async deleteVeterinarian(userId: number) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
