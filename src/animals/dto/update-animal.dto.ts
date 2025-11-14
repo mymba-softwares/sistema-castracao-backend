@@ -48,7 +48,7 @@ export class UpdateAnimalDto extends PartialType(CreateAnimalDto) {
     @ApiProperty({
       description: 'Idade estimada do animal em anos.',
     })
-    @IsNumber()
+    @IsString()
     @IsOptional()
-    age: number;
+    estimatedAge: string;
 }
