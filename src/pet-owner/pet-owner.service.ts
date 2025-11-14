@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePetOwnerDto } from './dto/create-pet-owner.dto';
 import { UpdatePetOwnerDto } from './dto/update-pet-owner.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 
@@ -86,6 +86,14 @@ export class PetOwnerService {
 
   async createPetOwner(userId: number, dto: CreatePetOwnerDto) {
   try {
+    const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+    
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+    
     const petOwner = await this.prisma.petOwner.create({
       data: {
         userId,
@@ -126,77 +134,80 @@ export class PetOwnerService {
 
     return petOwner;
   } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
     throw new ConflictException(`Error creating pet owner: ${error.message}`);
   }
 }
 
 
-  // async updatePetOwner(userId: number, dto: UpdatePetOwnerDto) {
-  //   const existingUser = await this.findPetOwnerById(userId);
+  async updatePetOwner(userId: number, dto: UpdatePetOwnerDto) {
+    const existingUser = await this.findPetOwnerById(userId);
 
-  //   if (!existingUser) {
-  //     throw new NotFoundException(`User with ID ${userId} not found.`);
-  //   }
+    if (!existingUser) {
+      throw new NotFoundException(`User with ID ${userId} not found.`);
+    }
 
-  //   if (dto.email || dto.cpf) {
-  //     const conflictingUser = await this.prisma.user.findFirst({
-  //       where: {
-  //         OR: [{ email: dto.email }, { cpf: dto.cpf }],
-  //         id: { not: userId },
-  //       },
-  //     });
+    if (dto.email || dto.cpf) {
+      const conflictingUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [{ email: dto.email }, { cpf: dto.cpf }],
+          id: { not: userId },
+        },
+      });
 
-  //     if (conflictingUser) {
-  //       throw new ConflictException('Email or CPF already in use by another user.');
-  //     }
-  //   }
+      if (conflictingUser) {
+        throw new ConflictException('Email or CPF already in use by another user.');
+      }
+    }
 
-  //   const {
-  //     fullAddress,
-  //     email,
-  //     password,
-  //     phone,
-  //     completeName,
-  //     cpf
-  //   } = dto;
+    const {
+      fullAddress,
+      email,
+      password,
+      phone,
+      completeName,
+      cpf
+    } = dto;
 
-  //   const userDataToUpdate: any = {};
+    const userDataToUpdate: any = {};
 
-  //   if (email) userDataToUpdate.email = email;
-  //   if (phone) userDataToUpdate.phone = phone;
-  //   if (completeName) userDataToUpdate.completeName = completeName;
-  //   if (cpf) userDataToUpdate.cpf = cpf;
+    if (email) userDataToUpdate.email = email;
+    if (phone) userDataToUpdate.phone = phone;
+    if (completeName) userDataToUpdate.completeName = completeName;
+    if (cpf) userDataToUpdate.cpf = cpf;
 
-  //   if (password) {
-  //     userDataToUpdate.hashedPassword = await bcrypt.hash(password, 10);
-  //   }
+    if (password) {
+      userDataToUpdate.hashedPassword = await bcrypt.hash(password, 10);
+    }
 
-  //   const petOwnerDataToUpdate: any = {};
+    const petOwnerDataToUpdate: any = {};
 
-  //   if (fullAddress) petOwnerDataToUpdate.fullAddress = fullAddress;
+    if (fullAddress) petOwnerDataToUpdate.fullAddress = fullAddress;
 
-  //   try {
-  //     await this.prisma.$transaction(async (tx) => {
-  //       if (Object.keys(userDataToUpdate).length > 0) {
-  //         await tx.user.update({
-  //           where: { id: userId },
-  //           data: userDataToUpdate,
-  //         });
-  //       }
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        if (Object.keys(userDataToUpdate).length > 0) {
+          await tx.user.update({
+            where: { id: userId },
+            data: userDataToUpdate,
+          });
+        }
 
-  //       if (Object.keys(petOwnerDataToUpdate).length > 0) {
-  //         await tx.petOwner.update({
-  //           where: { userId: userId },
-  //           data: petOwnerDataToUpdate,
-  //         });
-  //       }
-  //     });
-  //   } catch (error) {
-  //     throw new ConflictException(`Erro ao atualizar dados: ${error.message}`);
-  //   }
+        if (Object.keys(petOwnerDataToUpdate).length > 0) {
+          await tx.petOwner.update({
+            where: { userId: userId },
+            data: petOwnerDataToUpdate,
+          });
+        }
+      });
+    } catch (error) {
+      throw new ConflictException(`Erro ao atualizar dados: ${error.message}`);
+    }
 
-  //   return this.findPetOwnerById(userId);
-  // }
+    return this.findPetOwnerById(userId);
+  }
 
   async deletePetOwner(userId: number) {
     const user = await this.prisma.user.findUnique({

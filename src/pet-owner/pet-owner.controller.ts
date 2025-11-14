@@ -11,11 +11,11 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
 } from '../decorators/swagger-decorators'
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/decorators/role-decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../decorators/role-decorator';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { AuthUser } from 'src/interfaces/auth-user';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthUser } from '../interfaces/auth-user';
 import type { Request } from 'express';
 import { access } from 'fs';
 
@@ -64,21 +64,20 @@ export class PetOwnerController {
     return this.petOwnerService.findAnimalsByPetOwnerId(user.id);
   }
 
-  // @Patch('me')
-  // @Roles(Role.petOwner)
-  // @ApiOperation({
-  //   summary: 'Update profile of the currently logged-in PetOwner',
-  // })
-  // @ApiOkResponse('PetOwner')
-  // @ApiNotFoundResponse('PetOwner')
-
-  // updateMyProfile(
-  //   @Req() req: Request,
-  //   @Body() dto: UpdatePetOwnerDto,
-  // ) {
-  //   const user = req.user as AuthUser;
-  //   return this.petOwnerService.updatePetOwner(user.id, dto);
-  // }
+  @Patch('me')
+  @Roles(Role.petOwner)
+  @ApiOperation({
+    summary: 'Update profile of the currently logged-in PetOwner',
+  })
+  @ApiOkResponse('PetOwner')
+  @ApiNotFoundResponse('PetOwner')
+  updateMyProfile(
+    @Req() req: Request,
+    @Body() dto: UpdatePetOwnerDto,
+  ) {
+    const user = req.user as AuthUser;
+    return this.petOwnerService.updatePetOwner(user.id, dto);
+  }
 
   @Delete('me')
   @Roles(Role.petOwner)
@@ -133,20 +132,19 @@ export class PetOwnerController {
     return this.petOwnerService.findPetOwnerByEmail(email);
   }
 
-  // @Patch(':id')
-  // @Roles(Role.administrator, Role.semas, Role.receptionist)
-  // @ApiOperation({
-  //   summary: 'Update a pet owner',
-  // })
-  // @ApiParam({ name: 'id', type: Number })
-  // @ApiOkResponse('PetOwner')
-  // @ApiNotFoundResponse('PetOwner')
-  // @ApiUnauthorizedResponse()
-  // @ApiForbiddenResponse()
-
-  // update(@Param('id') id: number, @Body() dto: UpdatePetOwnerDto) {
-  //   return this.petOwnerService.updatePetOwner(Number(id), dto);
-  // }
+  @Patch(':id')
+  @Roles(Role.administrator, Role.semas, Role.receptionist)
+  @ApiOperation({
+    summary: 'Update a pet owner',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse('PetOwner')
+  @ApiNotFoundResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+  @ApiForbiddenResponse()
+  update(@Param('id') id: string, @Body() dto: UpdatePetOwnerDto) {
+    return this.petOwnerService.updatePetOwner(Number(id), dto);
+  }
 
   @Delete(':id')
   @Roles(Role.administrator, Role.semas)

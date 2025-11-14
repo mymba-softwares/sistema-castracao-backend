@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreatePetOwnerDto } from './create-pet-owner.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsEmail,
     IsOptional,
@@ -39,4 +39,9 @@ export class UpdatePetOwnerDto extends PartialType(CreatePetOwnerDto) {
     @IsString()
     @IsOptional()
     documentUrl?: string;
+
+    @ApiPropertyOptional({ description: 'CPF' })
+      @IsString()
+      @IsOptional()
+      cpf?: string;
 }
