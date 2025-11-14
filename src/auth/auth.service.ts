@@ -1,14 +1,14 @@
 import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
-import { VeterinarianService } from 'src/veterinarian/veterinarian.service'
-import { PetOwnerService } from 'src/pet-owner/pet-owner.service'
+import { VeterinarianService } from '../veterinarian/veterinarian.service'
+import { PetOwnerService } from '../pet-owner/pet-owner.service'
 import { UserService } from '../user/user.service'
 import { TokenService } from '../token/token.service'
 import { LoginDto } from '../dto/login.dto'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { Role, Veterinarian, PetOwner } from '@prisma/client'
 import { cpf } from 'cpf-cnpj-validator'
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -63,6 +63,8 @@ export class AuthService {
   }
 
   async register(dto: CreateUserDto) {
+  
+  await this.validateRegisterData(dto);
   const existingUser = await this.prisma.user.findFirst({
     where: { OR: [{ email: dto.email }, { cpf: dto.cpf }] },
   });

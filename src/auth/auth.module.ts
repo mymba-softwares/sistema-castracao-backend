@@ -6,8 +6,8 @@ import { UserModule } from '../user/user.module'
 import { TokenModule } from '../token/token.module'
 import { jwtConstants } from './constants'
 import { JwtStrategy } from './jwt-strategy'
-import { PetOwnerModule } from 'src/pet-owner/pet-owner.module'
-import { VeterinarianModule } from 'src/veterinarian/veterinarian.module'
+import { PetOwnerModule } from '../pet-owner/pet-owner.module'
+import { VeterinarianModule } from '../veterinarian/veterinarian.module'
 
 @Module({
   imports: [
