@@ -100,3 +100,4 @@ export function ApiLogin() {
     ApiInternalServerErrorResponse('Failed to login', 'Internal server error while logging in'),
   )
 }
+
