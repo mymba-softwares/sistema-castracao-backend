@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Gender, Species } from '@prisma/client';
 
 @Injectable()
@@ -75,7 +75,7 @@ export class AnimalsService {
         name,
         species,
         breed,
-        age,
+        estimatedAge,
         sizeWeight,
         gender,
         microchipNumber,
@@ -86,7 +86,7 @@ export class AnimalsService {
       if (name) animalDataToUpdate.name = name;
       if (species) animalDataToUpdate.species = species;
       if (breed) animalDataToUpdate.breed = breed;
-      if (age) animalDataToUpdate.age = age;
+      if (estimatedAge) animalDataToUpdate.estimatedAge = estimatedAge;
       if (sizeWeight) animalDataToUpdate.sizeWeight = sizeWeight
       if (gender) animalDataToUpdate.gender = gender;
       if (microchipNumber) animalDataToUpdate.microchipNumber = microchipNumber;
@@ -96,7 +96,7 @@ export class AnimalsService {
         data: animalDataToUpdate,
       });
     } catch (error) {
-      throw new ConflictException(`Error updating animal: ${error.message}`);
+      throw new NotFoundException(`Error updating animal: ${error.message}`);
     }
 
     return this.findAnimalById(id);
@@ -114,7 +114,7 @@ export class AnimalsService {
         where: { id: id },
       });
 
-      return { message: 'Animal deleted successfully.' };
+      return { message: 'Animal deleted successfully' };
     } catch (error) {
       throw new ConflictException(`Error deleting animal: ${error.message}`);
     }

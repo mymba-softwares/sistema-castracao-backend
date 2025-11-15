@@ -2,13 +2,13 @@ import { Controller, Post, HttpCode, UseGuards, Headers, Param } from '@nestjs/c
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger'
 import { TokenService } from './token.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { RolesGuard } from 'src/auth/roles.guard'
+import { RolesGuard } from '../auth/roles.guard'
 import {
     ApiUnauthorizedResponse,
     ApiInternalServerErrorResponse,
 } from '../decorators/swagger-decorators'
 import { JsonWebTokenError } from '@nestjs/jwt'
-import { Roles } from 'src/decorators/role-decorator'
+import { Roles } from '../decorators/role-decorator'
 
 @ApiTags('Token')
 @Controller('auth')

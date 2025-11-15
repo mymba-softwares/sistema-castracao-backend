@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePetOwnerDto } from './dto/create-pet-owner.dto';
 import { UpdatePetOwnerDto } from './dto/update-pet-owner.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 
@@ -84,58 +84,63 @@ export class PetOwnerService {
     return petOwner;
   }
 
-  async createPetOwner(createPetOwnerDto: CreatePetOwnerDto) {
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: createPetOwnerDto.email }, { cpf: createPetOwnerDto.cpf }]
+  async createPetOwner(userId: number, dto: CreatePetOwnerDto) {
+  try {
+    const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+    
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+    
+    const petOwner = await this.prisma.petOwner.create({
+      data: {
+        userId,
+        fullAddress: dto.fullAddress,
       },
-      select: { id: true },
+      include: {
+        user: {
+          select: {
+            id: true,
+            completeName: true,
+            email: true,
+            cpf: true,
+            phone: true,
+            role: true,
+          },
+        },
+        commitmentTerms: {
+          select: {
+            id: true,
+            documentUrl: true,
+            signatureDate: true,
+          },
+        },
+      },
     });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email or CPF already exists');
-    }
-
-    const hasedPassword = await bcrypt.hash(createPetOwnerDto.password, 10);
-
-    try {
-      const result = await this.prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: {
-            email: createPetOwnerDto.email,
-            hashedPassword: hasedPassword,
-            completeName: createPetOwnerDto.completeName,
-            cpf: createPetOwnerDto.cpf,
-            phone: createPetOwnerDto.phone,
-            role: Role.petOwner,
-          },
-        });
-
-        const petOwner = await tx.petOwner.create({
-          data: {
-            userId: user.id,
-            fullAddress: createPetOwnerDto.fullAddress
-          },
-        });
-
-        const commitmentTerm = await tx.commitmentTerm.create({
-          data: {
-            petOwnerId: petOwner.id,
-            documentUrl: createPetOwnerDto.documentUrl,
-            signatureDate: new Date(),
-          },
-        });
-
-        const {hashedPassword: _, ...safeUser} = user;
-
-        return { ...safeUser, petOwner: petOwner };
+    if (dto.documentUrl) {
+      const commitmentTerm = await this.prisma.commitmentTerm.create({
+        data: {
+          petOwnerId: petOwner.id,
+          documentUrl: dto.documentUrl,
+          signatureDate: new Date(),
+        },
       });
 
-      return result;
-    } catch (error) {
-      throw new ConflictException(`Error creating pet owner: ${error.message}`);
+      petOwner.commitmentTerms = [commitmentTerm];
     }
+
+    return petOwner;
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+    throw new ConflictException(`Error creating pet owner: ${error.message}`);
   }
+}
+
 
   async updatePetOwner(userId: number, dto: UpdatePetOwnerDto) {
     const existingUser = await this.findPetOwnerById(userId);

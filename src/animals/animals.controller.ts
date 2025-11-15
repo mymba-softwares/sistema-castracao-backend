@@ -11,9 +11,9 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
 } from '../decorators/swagger-decorators'
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/decorators/role-decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../decorators/role-decorator';
 import { Role } from '@prisma/client';
 
 @ApiTags('Animals (Animais).')

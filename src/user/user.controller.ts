@@ -14,7 +14,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../decorators/role-decorator'
-import { $Enums } from '../../generated/prisma-client'
+import { $Enums } from '@prisma/client'
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')

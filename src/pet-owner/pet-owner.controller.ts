@@ -11,11 +11,11 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
 } from '../decorators/swagger-decorators'
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/decorators/role-decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../decorators/role-decorator';
 import { Role } from '@prisma/client';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { AuthUser } from 'src/interfaces/auth-user';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthUser } from '../interfaces/auth-user';
 import type { Request } from 'express';
 import { access } from 'fs';
 
@@ -34,8 +34,9 @@ export class PetOwnerController {
   @ApiCreatedResponse('PetOwner')
   @ApiInternalServerErrorResponse()
 
-  create(@Body() dto: CreatePetOwnerDto) {
-    return this.petOwnerService.createPetOwner(dto);
+    create(@Body() dto: CreatePetOwnerDto, @Req() req: Request) {
+    const user = req.user as AuthUser;
+    return this.petOwnerService.createPetOwner(user.id, dto);
   }
 
   //Rotas para PetOwner logado
@@ -70,7 +71,6 @@ export class PetOwnerController {
   })
   @ApiOkResponse('PetOwner')
   @ApiNotFoundResponse('PetOwner')
-
   updateMyProfile(
     @Req() req: Request,
     @Body() dto: UpdatePetOwnerDto,
@@ -142,8 +142,7 @@ export class PetOwnerController {
   @ApiNotFoundResponse('PetOwner')
   @ApiUnauthorizedResponse()
   @ApiForbiddenResponse()
-
-  update(@Param('id') id: number, @Body() dto: UpdatePetOwnerDto) {
+  update(@Param('id') id: string, @Body() dto: UpdatePetOwnerDto) {
     return this.petOwnerService.updatePetOwner(Number(id), dto);
   }
 
