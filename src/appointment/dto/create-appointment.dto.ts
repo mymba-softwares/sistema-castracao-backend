@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { AppointmentStatus, ServiceType } from "@prisma/client";
-import { IsNotEmpty, IsNumber, IsOptional } from "class-validator";
+import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { Type } from "class-transformer";
 
 export class CreateAppointmentDto {
     @ApiProperty({
@@ -8,10 +9,10 @@ export class CreateAppointmentDto {
     })
     @IsNumber()
     @IsNotEmpty()
-    animalId: number
+    animalId: number;
 
     @ApiProperty({
-        description: 'ID do proprietário do animal.',
+      description: 'ID do proprietário do animal.',
     })
     @IsNumber()
     @IsNotEmpty()
@@ -20,32 +21,41 @@ export class CreateAppointmentDto {
     @ApiProperty({
       description: 'Data e hora de início do agendamento.',
     })
+    @IsDateString()
     @IsNotEmpty()
     startTime: Date;
 
     @ApiProperty({
       description: 'Data e hora de término do agendamento.',
     })
+    @IsDateString()
     @IsNotEmpty()
     endTime: Date;
 
     @ApiProperty({
       description: 'Tipo de serviço para o agendamento.',
       enum: ServiceType,
+      required: false,
     })
-    @IsNotEmpty()
-    serviceType: ServiceType;
+    @IsEnum(ServiceType)
+    @IsOptional()
+    serviceType?: ServiceType;
 
     @ApiProperty({
-        description: 'Status do agendamento.',
-        enum: AppointmentStatus,
+      description: 'Status do agendamento.',
+      enum: AppointmentStatus,
+      required: false,
+      default: AppointmentStatus.scheduled,
     })
-    @IsNotEmpty()
-    status: AppointmentStatus;
+    @IsEnum(AppointmentStatus)
+    @IsOptional()
+    status?: AppointmentStatus;
 
     @ApiProperty({
       description: 'Notas adicionais para o agendamento.',
+      required: false,
     })
+    @IsString()
     @IsOptional()
-    notes: string;
+    notes?: string;
 }
