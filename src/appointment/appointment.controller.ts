@@ -24,7 +24,7 @@ export class AppointmentController {
   constructor(private readonly appointmentService: AppointmentService) {}
 
   @Post()
-  @Roles($Enums.Role.administrator, $Enums.Role.receptionist, $Enums.Role.petOwner)
+  @Roles('administrator', 'receptionist', 'petOwner')
   @ApiOperation({ summary: 'Create a new appointment' })
   @ApiCreatedResponse('Appointment')
   @ApiInternalServerErrorResponse()
@@ -33,7 +33,7 @@ export class AppointmentController {
   }
 
   @Get()
-  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist)
+  @Roles('administrator', 'semas', 'veterinarian', 'receptionist')
   @ApiOperation({ summary: 'Get all appointments' })
   @ApiOkResponse('Appointments')
   @ApiInternalServerErrorResponse()
@@ -42,7 +42,7 @@ export class AppointmentController {
   }
 
   @Get('status/:status')
-  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist)
+  @Roles('administrator', 'semas', 'veterinarian', 'receptionist')
   @ApiOperation({ summary: 'Get appointments by status' })
   @ApiParam({ name: 'status', enum: AppointmentStatus })
   @ApiOkResponse('Appointments')
@@ -55,7 +55,7 @@ export class AppointmentController {
   }
 
   @Get('animal/:animalId')
-  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist, $Enums.Role.petOwner)
+  @Roles('administrator', 'semas', 'veterinarian', 'receptionist', 'petOwner')
   @ApiOperation({ summary: 'Get appointments by animal ID' })
   @ApiParam({ name: 'animalId', type: Number })
   @ApiOkResponse('Appointments')
@@ -67,7 +67,7 @@ export class AppointmentController {
   }
 
   @Get('pet-owner/:petOwnerId')
-  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist, $Enums.Role.petOwner)
+  @Roles('administrator', 'semas', 'veterinarian', 'receptionist', 'petOwner')
   @ApiOperation({ summary: 'Get appointments by pet owner ID' })
   @ApiParam({ name: 'petOwnerId', type: Number })
   @ApiOkResponse('Appointments')
@@ -79,7 +79,7 @@ export class AppointmentController {
   }
 
   @Get(':id')
-  @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist, $Enums.Role.petOwner)
+  @Roles('administrator', 'semas', 'veterinarian', 'receptionist', 'petOwner')
   @ApiOperation({ summary: 'Get appointment by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse('Appointment')
@@ -91,7 +91,7 @@ export class AppointmentController {
   }
 
   @Patch(':id')
-  @Roles($Enums.Role.administrator, $Enums.Role.veterinarian, $Enums.Role.receptionist, $Enums.Role.petOwner)
+  @Roles('administrator', 'veterinarian', 'receptionist', 'petOwner')
   @ApiOperation({ summary: 'Update an appointment' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse('Appointment')
@@ -104,7 +104,7 @@ export class AppointmentController {
   }
 
   @Delete(':id')
-  @Roles($Enums.Role.administrator, $Enums.Role.receptionist)
+  @Roles('administrator', 'receptionist')
   @ApiOperation({ summary: 'Delete an appointment' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse('Appointment')
