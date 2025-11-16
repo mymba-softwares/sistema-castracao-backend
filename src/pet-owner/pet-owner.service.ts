@@ -50,6 +50,32 @@ export class PetOwnerService {
     return petOwner;
   }
 
+  async findPetOwnerByPetOwnerId(petOwnerId: number) {
+    const petOwner = await this.prisma.petOwner.findUnique({
+      where: { id: petOwnerId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            completeName: true,
+            email: true,
+            cpf: true,
+            phone: true,
+          },
+        },
+        _count: {
+          select: { animals: true },
+        },
+      },
+    });
+
+    if (!petOwner) {
+      throw new NotFoundException('Pet owner not found');
+    }
+
+    return petOwner;
+  }
+
   async findMyProfile(userId: number) {
     const petOwner = await this.prisma.petOwner.findUnique({
       where: { userId: userId },

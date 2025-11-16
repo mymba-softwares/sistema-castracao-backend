@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { PetOwnerService } from './pet-owner.service';
+import { AppointmentService } from '../appointment/appointment.service';
 import { CreatePetOwnerDto } from './dto/create-pet-owner.dto';
 import { UpdatePetOwnerDto } from './dto/update-pet-owner.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
@@ -10,21 +11,23 @@ import {
   ApiNotFoundResponse,
   ApiCreatedResponse,
   ApiOkResponse,
-} from '../decorators/swagger-decorators'
+} from '../decorators/swagger-decorators';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../decorators/role-decorator';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuthUser } from '../interfaces/auth-user';
 import type { Request } from 'express';
-import { access } from 'fs';
 
-@ApiTags('PetOwners (Responsáveis).')
+@ApiTags('PetOwners')
 @ApiBearerAuth('access-token')
 @Controller('pet-owner')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PetOwnerController {
-  constructor(private readonly petOwnerService: PetOwnerService) {}
+  constructor(
+    private readonly petOwnerService: PetOwnerService,
+    private readonly appointmentService: AppointmentService,
+  ) {}
 
   @Post()
   @Roles(Role.administrator, Role.semas, Role.receptionist)
@@ -47,6 +50,8 @@ export class PetOwnerController {
   })
   @ApiOkResponse('PetOwner')
   @ApiNotFoundResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+  @ApiInternalServerErrorResponse()
   getMyProfile(@Req() req: Request) {
     const user = req.user as AuthUser;
     return this.petOwnerService.findPetOwnerById(user.id);
@@ -59,9 +64,26 @@ export class PetOwnerController {
   })
   @ApiOkResponse('Animals')
   @ApiNotFoundResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+  @ApiInternalServerErrorResponse()
   getMyPets(@Req() req: Request) {
     const user = req.user as AuthUser;
     return this.petOwnerService.findAnimalsByPetOwnerId(user.id);
+  }
+
+  @Get('me/appointments')
+  @Roles(Role.petOwner)
+  @ApiOperation({
+    summary: 'Get my appointments as pet owner',
+  })
+  @ApiOkResponse('Appointments')
+  @ApiNotFoundResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+  @ApiInternalServerErrorResponse()
+  async getMyAppointments(@Req() req: Request) {
+    const user = req.user as AuthUser;
+    const petOwner = await this.petOwnerService.findPetOwnerById(user.id);
+    return this.appointmentService.findByPetOwnerId(petOwner.id);
   }
 
   @Patch('me')
@@ -71,6 +93,8 @@ export class PetOwnerController {
   })
   @ApiOkResponse('PetOwner')
   @ApiNotFoundResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+  @ApiInternalServerErrorResponse()
   updateMyProfile(
     @Req() req: Request,
     @Body() dto: UpdatePetOwnerDto,
@@ -86,7 +110,9 @@ export class PetOwnerController {
   })
   @ApiOkResponse('PetOwner')
   @ApiNotFoundResponse('PetOwner')
-
+  @ApiUnauthorizedResponse()
+  @ApiForbiddenResponse()
+  @ApiInternalServerErrorResponse()
   deleteMyProfile(@Req() req: Request) {
     const user = req.user as AuthUser;
     return this.petOwnerService.deletePetOwner(user.id);
@@ -98,8 +124,9 @@ export class PetOwnerController {
     summary: 'Get all pet owners',
   })
   @ApiOkResponse('PetOwner')
+  @ApiUnauthorizedResponse()
+  @ApiForbiddenResponse()
   @ApiInternalServerErrorResponse()
-
   findAll() {
     return this.petOwnerService.findAllPetOwners();
   }
@@ -113,7 +140,8 @@ export class PetOwnerController {
   @ApiOkResponse('PetOwner')
   @ApiNotFoundResponse('PetOwner')
   @ApiUnauthorizedResponse()
-
+  @ApiForbiddenResponse()
+  @ApiInternalServerErrorResponse()
   findOne(@Param('id') id: string) {
     return this.petOwnerService.findPetOwnerById(Number(id));
   }
@@ -127,7 +155,8 @@ export class PetOwnerController {
   @ApiOkResponse('PetOwner')
   @ApiNotFoundResponse('PetOwner')
   @ApiUnauthorizedResponse()
-
+  @ApiForbiddenResponse()
+  @ApiInternalServerErrorResponse()
   findOneByEmail(@Param('email') email: string) {
     return this.petOwnerService.findPetOwnerByEmail(email);
   }
@@ -156,8 +185,8 @@ export class PetOwnerController {
   @ApiNotFoundResponse('PetOwner')
   @ApiUnauthorizedResponse()
   @ApiForbiddenResponse()
-
-  remove(@Param('id') id: string) {
+  @ApiInternalServerErrorResponse()
+  delete(@Param('id') id: string) {
     return this.petOwnerService.deletePetOwner(Number(id));
   }
 }

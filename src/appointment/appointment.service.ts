@@ -120,7 +120,7 @@ export class AppointmentService {
   }
 
   async findByPetOwnerId(petOwnerId: number) {
-    const petOwner = await this.petOwnerService.findPetOwnerById(petOwnerId);
+    const petOwner = await this.petOwnerService.findPetOwnerByPetOwnerId(petOwnerId);
 
     if (!petOwner) {
       throw new NotFoundException('Pet owner not found');
@@ -179,13 +179,12 @@ export class AppointmentService {
       throw new NotFoundException('Animal not found');
     }
 
-    const petOwner = await this.petOwnerService.findPetOwnerById(createAppointmentDto.petOwnerId);
+    const petOwner = await this.petOwnerService.findPetOwnerByPetOwnerId(createAppointmentDto.petOwnerId);
 
     if (!petOwner) {
       throw new NotFoundException('Pet owner not found');
     }
 
-    // Validar se o animal pertence ao pet owner
     if (animal.petOwnerId !== createAppointmentDto.petOwnerId) {
       throw new ConflictException('Animal does not belong to this pet owner');
     }
