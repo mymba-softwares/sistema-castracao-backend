@@ -121,9 +121,10 @@
   // Specific data for the animal's owner.
   // The address is geocoded to generate the heatmap.
   model PetOwner {
-    id          Int    @id @default(autoincrement())
-    userId      Int    @unique
-    fullAddress String // Source for RF08
+    id          Int     @id @default(autoincrement())
+    userId      Int     @unique
+    fullAddress String  // Source for RF08
+    nis         String? // Número de Identificação Social (opcional)
 
     // Relations
     user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -148,10 +149,11 @@
   }
 
   model Veterinarian {
-    id      Int     @id @default(autoincrement())
-    userId  Int     @unique
-    crmv    String? @unique // Regional Council of Veterinary Medicine
-    active  Boolean @default(true)
+    id        Int     @id @default(autoincrement())
+    userId    Int     @unique
+    crmv      String? @unique // Regional Council of Veterinary Medicine
+    specialty String? // Especialidade do veterinário
+    active    Boolean @default(true)
 
     // Relations
     user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)

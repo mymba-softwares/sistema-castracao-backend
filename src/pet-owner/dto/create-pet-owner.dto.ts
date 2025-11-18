@@ -7,6 +7,11 @@ export class CreatePetOwnerDto {
     @IsNotEmpty()
     fullAddress: string;
 
+    @ApiProperty({ description: 'Número de Identificação Social (opcional).', required: false })
+    @IsString()
+    @IsOptional()
+    nis?: string;
+
     @ApiProperty({ description: 'URL de um documento assinado (opcional).', required: false })
     @IsString()
     @IsOptional()

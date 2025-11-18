@@ -31,7 +31,15 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
+  specialty?: string;
+
+  @IsOptional()
+  @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsString()
+  nis?: string;
 
   @IsOptional()
   @IsBoolean()

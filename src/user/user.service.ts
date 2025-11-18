@@ -23,16 +23,67 @@ export class UserService {
 
   async findAll() {
     return this.prisma.user.findMany({
-      select: { id: true, role: true, email: true, completeName: true, cpf: true, phone: true, createdAt: true },
+      select: { 
+        id: true, 
+        role: true, 
+        email: true, 
+        completeName: true, 
+        cpf: true, 
+        phone: true, 
+        createdAt: true,
+        veterinarian: {
+          select: {
+            id: true,
+            userId: true,
+            crmv: true,
+            specialty: true,
+            active: true
+          }
+        },
+        petOwner: {
+          select: {
+            id: true,
+            userId: true,
+            fullAddress: true
+          }
+        }
+      },
     })
   }
 
   async findById(id: number) {
-    const user = await this.prisma.user.findUnique({ where: { id } })
+    const user = await this.prisma.user.findUnique({ 
+      where: { id },
+      select: {
+        id: true,
+        role: true,
+        email: true,
+        completeName: true,
+        cpf: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
+        veterinarian: {
+          select: {
+            id: true,
+            userId: true,
+            crmv: true,
+            specialty: true,
+            active: true
+          }
+        },
+        petOwner: {
+          select: {
+            id: true,
+            userId: true,
+            fullAddress: true
+          }
+        }
+      }
+    })
     if (!user) throw new NotFoundException('User not found')
         
-    const { hashedPassword: _, ...safeUser } = user 
-    return safeUser
+    return user
   }
 
   async findByEmail(email: string) {

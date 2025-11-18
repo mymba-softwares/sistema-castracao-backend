@@ -35,7 +35,9 @@ export function ApiRegister() {
             example: 'veterinarian'
           },
           crmv: { type: 'string', example: 'CRMV-PE12345', description: 'Required for veterinarians' },
+          specialty: { type: 'string', example: 'Cirurgia Veterinária', description: 'Optional for veterinarians' },
           address: { type: 'string', example: 'Rua Exemplo, 123', description: 'Required for pet owners' },
+          nis: { type: 'string', example: '12345678901', description: 'Optional for pet owners - NIS number' },
           active: { type: 'boolean', example: true, description: 'Optional, defaults to true for veterinarians' },
         },
       },
@@ -50,6 +52,7 @@ export function ApiRegister() {
             phone: '81999998888',
             role: 'veterinarian',
             crmv: 'CRMV-PE12345',
+            specialty: 'Cirurgia Veterinária',
             active: true,
           },
         },
@@ -63,6 +66,7 @@ export function ApiRegister() {
             phone: '81988887777',
             role: 'petOwner',
             address: 'Rua das Flores, 456 - Recife/PE',
+            nis: '12345678901',
           },
         },
         administrator: {
@@ -98,6 +102,7 @@ export function ApiRegister() {
             properties: {
               id: { type: 'number', example: 1 },
               crmv: { type: 'string', example: 'CRMV-PE12345' },
+              specialty: { type: 'string', example: 'Cirurgia Veterinária' },
               active: { type: 'boolean', example: true },
             },
           },
