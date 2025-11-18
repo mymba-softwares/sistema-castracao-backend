@@ -12,10 +12,16 @@ export class VeterinarianService {
 
   async findAllVeterinarians() {
     return this.prisma.veterinarian.findMany({
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        crmv: true,
+        specialty: true,
+        active: true,
         user: {
           select: {
             completeName: true,
+            cpf: true,
             email: true,
             phone: true,
           },
@@ -30,7 +36,12 @@ export class VeterinarianService {
   async findVeterinarianById(userId: number) {
     const vet = await this.prisma.veterinarian.findUnique({
       where: { userId },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        crmv: true,
+        specialty: true,
+        active: true,
         user: {
           select: {
             completeName: true,
@@ -72,6 +83,7 @@ async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
       data: {
         userId,
         crmv: dto.crmv,
+        specialty: dto.specialty,
         active: dto.active ?? true,
       },
       include: {
@@ -115,7 +127,7 @@ async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
       }
     }
 
-    const { crmv, active, email, password, phone, completeName, cpf } = dto;
+    const { crmv, specialty, active, email, password, phone, completeName, cpf } = dto;
 
     const userDataToUpdate: any = {};
     if (email) userDataToUpdate.email = email;
@@ -126,6 +138,7 @@ async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
 
     const veterinarianDataToUpdate: any = {};
     if (crmv) veterinarianDataToUpdate.crmv = crmv;
+    if (specialty) veterinarianDataToUpdate.specialty = specialty;
     if (typeof active === 'boolean') veterinarianDataToUpdate.active = active;
 
     try {

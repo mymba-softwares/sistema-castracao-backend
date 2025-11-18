@@ -8,9 +8,12 @@ import { AuthModule } from './auth/auth.module';
 import { PetOwnerModule } from './pet-owner/pet-owner.module';
 import { AnimalsModule } from './animals/animals.module';
 import { VeterinarianModule } from './veterinarian/veterinarian.module';
+import { AppointmentModule } from './appointment/appointment.module';
+import { ClinicalRecordModule } from './clinical-record/clinical-record.module';
+import { MedicalRecordModule } from './medical-record/medical-record.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, TokenModule, AuthModule, PetOwnerModule, AnimalsModule, VeterinarianModule],
+  imports: [UserModule, PrismaModule, TokenModule, AuthModule, PetOwnerModule, AnimalsModule, VeterinarianModule, AppointmentModule, ClinicalRecordModule, MedicalRecordModule],
   controllers: [AppController],
   providers: [AppService],
 })

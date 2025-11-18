@@ -95,6 +95,7 @@ export class AuthService {
 
       relatedEntity = await this.veterinarianService.createVeterinarian(user.id, {
         crmv: dto.crmv,
+        specialty: dto.specialty || '',
         active: true,
       });
       break;
@@ -118,6 +119,7 @@ export class AuthService {
 
       relatedEntity = await this.petOwnerService.createPetOwner(user.id, {
         fullAddress: dto.address,
+        nis: dto.nis,
       });
       break;
 

@@ -11,16 +11,21 @@ export class PetOwnerService {
 
   async findAllPetOwners() {
     return this.prisma.petOwner.findMany({
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        fullAddress: true,
+        nis: true,
         user: {
           select: {
             completeName: true,
+            cpf: true,
             email: true,
           },
         },
         _count: {
           select: { animals: true },
-        }
+        },
       },
     });
   }
@@ -28,9 +33,43 @@ export class PetOwnerService {
   async findPetOwnerById(userId: number) {
     const petOwner = await this.prisma.petOwner.findUnique({
       where: { userId: userId },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        fullAddress: true,
+        nis: true,
         user: {
           select: {
+            completeName: true,
+            email: true,
+            cpf: true,
+            phone: true,
+          },
+        },
+        _count: {
+          select: { animals: true },
+        },
+      },
+    });
+
+    if (!petOwner) {
+      throw new NotFoundException('Pet owner not found');
+    }
+
+    return petOwner;
+  }
+
+  async findPetOwnerByPetOwnerId(petOwnerId: number) {
+    const petOwner = await this.prisma.petOwner.findUnique({
+      where: { id: petOwnerId },
+      select: {
+        id: true,
+        userId: true,
+        fullAddress: true,
+        nis: true,
+        user: {
+          select: {
+            id: true,
             completeName: true,
             email: true,
             cpf: true,
@@ -98,6 +137,7 @@ export class PetOwnerService {
       data: {
         userId,
         fullAddress: dto.fullAddress,
+        nis: dto.nis,
       },
       include: {
         user: {
@@ -129,7 +169,7 @@ export class PetOwnerService {
         },
       });
 
-      petOwner.commitmentTerms = [commitmentTerm];
+      (petOwner as any).commitmentTerms = [commitmentTerm];
     }
 
     return petOwner;

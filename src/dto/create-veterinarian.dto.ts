@@ -9,6 +9,11 @@ export class CreateVeterinarianDto {
 
   @ApiProperty()
   @IsOptional()
+  @IsString()
+  specialty: string;
+
+  @ApiProperty()
+  @IsOptional()
   @IsBoolean()
   active: boolean;
 }
