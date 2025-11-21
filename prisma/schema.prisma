@@ -80,16 +80,18 @@
   }
 
   model User {
-    id              Int      @id @default(autoincrement())
-    role            Role
-    email           String   @unique
-    hashedPassword  String
-    completeName    String
-    cpf             String   @unique // Used for login for all users
-    phone           String   // Essential for notifications
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
-    recoveryMode    Boolean  @default(false)
+    id                    Int       @id @default(autoincrement())
+    role                  Role
+    email                 String    @unique
+    hashedPassword        String
+    completeName          String
+    cpf                   String    @unique // Used for login for all users
+    phone                 String    // Essential for notifications
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+    recoveryMode          Boolean   @default(false)
+    passwordResetToken    String?   @unique
+    passwordResetExpires  DateTime?
 
     // Relations
     tokens          Token[]
@@ -152,8 +154,10 @@
     id        Int     @id @default(autoincrement())
     userId    Int     @unique
     crmv      String? @unique // Regional Council of Veterinary Medicine
-    specialty String? // Especialidade do veterinário
+    specialty String? 
     active    Boolean @default(true)
+    enrollment String?
+
 
     // Relations
     user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)

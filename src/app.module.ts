@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TokenModule } from './token/token.module';
 import { AuthModule } from './auth/auth.module';
+import { EmailModule } from './email/email.module';
 import { PetOwnerModule } from './pet-owner/pet-owner.module';
 import { AnimalsModule } from './animals/animals.module';
 import { VeterinarianModule } from './veterinarian/veterinarian.module';
@@ -13,7 +14,7 @@ import { ClinicalRecordModule } from './clinical-record/clinical-record.module';
 import { MedicalRecordModule } from './medical-record/medical-record.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, TokenModule, AuthModule, PetOwnerModule, AnimalsModule, VeterinarianModule, AppointmentModule, ClinicalRecordModule, MedicalRecordModule],
+  imports: [UserModule, PrismaModule, TokenModule, AuthModule, EmailModule, PetOwnerModule, AnimalsModule, VeterinarianModule, AppointmentModule, ClinicalRecordModule, MedicalRecordModule],
   controllers: [AppController],
   providers: [AppService],
 })

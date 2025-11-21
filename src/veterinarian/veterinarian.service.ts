@@ -12,6 +12,11 @@ export class VeterinarianService {
 
   async findAllVeterinarians() {
     return this.prisma.veterinarian.findMany({
+      where: {
+        user: {
+          role: Role.veterinarian,
+        },
+      },
       select: {
         id: true,
         userId: true,
@@ -24,6 +29,7 @@ export class VeterinarianService {
             cpf: true,
             email: true,
             phone: true,
+            role: true,
           },
         },
         _count: {
@@ -48,6 +54,7 @@ export class VeterinarianService {
             email: true,
             cpf: true,
             phone: true,
+            role: true,
           },
         },
         _count: {
@@ -56,7 +63,9 @@ export class VeterinarianService {
       },
     });
 
-    if (!vet) throw new NotFoundException('Veterinarian not found');
+    if (!vet || vet.user.role) {
+      throw new NotFoundException('Veterinarian not found');
+    }
     return vet;
   }
 
@@ -67,6 +76,65 @@ export class VeterinarianService {
 
     if (!vet) throw new NotFoundException('Veterinarian not found');
     return vet;
+  }
+
+  async findAllStudents() {
+    return this.prisma.veterinarian.findMany({
+      where: {
+        user: {
+          role: Role.student,
+        },
+      },
+      select: {
+        id: true,
+        userId: true,
+        enrollment: true,
+        specialty: true,
+        active: true,
+        user: {
+          select: {
+            completeName: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
+        },
+        _count: {
+          select: { clinicalRecords: true },
+        },
+      },
+    });
+  }
+
+  async findStudentById(userId: number) {
+    const student = await this.prisma.veterinarian.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        userId: true,
+        enrollment: true,
+        specialty: true,
+        active: true,
+        user: {
+          select: {
+            completeName: true,
+            email: true,
+            cpf: true,
+            phone: true,
+            role: true,
+          },
+        },
+        _count: {
+          select: { clinicalRecords: true },
+        },
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return student;
   }
 
 async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
@@ -84,6 +152,7 @@ async createVeterinarian(userId: number, dto: CreateVeterinarianDto) {
         userId,
         crmv: dto.crmv,
         specialty: dto.specialty,
+        enrollment: dto.enrollment,
         active: dto.active ?? true,
       },
       include: {
