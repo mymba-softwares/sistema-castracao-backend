@@ -79,6 +79,25 @@ export class VeterinarianController {
     return this.veterinarianService.findAllVeterinarians();
   }
 
+  @Get('students')
+  @Roles(Role.administrator, Role.semas)
+  @ApiOperation({ summary: 'Get all students' })
+  @ApiOkResponse('Students retrieved successfully')
+  @ApiInternalServerErrorResponse()
+  findAllStudents() {
+    return this.veterinarianService.findAllStudents();
+  }
+
+  @Get('students/:id')
+  @Roles(Role.administrator, Role.semas)
+  @ApiOperation({ summary: 'Get a specific student by user ID' })
+  @ApiOkResponse('Student retrieved successfully')
+  @ApiNotFoundResponse('Student')
+  @ApiInternalServerErrorResponse()
+  findStudentById(@Param('id') id: string) {
+    return this.veterinarianService.findStudentById(+id);
+  }
+
   @Get(':id')
   @Roles(Role.administrator)
   @ApiOperation({ summary: 'Get a veterinarian by ID' })
