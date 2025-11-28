@@ -63,7 +63,7 @@ export class VeterinarianService {
       },
     });
 
-    if (!vet || vet.user.role) {
+    if (!vet || vet.user.role !== Role.veterinarian) {
       throw new NotFoundException('Veterinarian not found');
     }
     return vet;
