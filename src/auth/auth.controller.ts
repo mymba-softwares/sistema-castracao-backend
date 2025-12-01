@@ -2,8 +2,9 @@ import { Controller, Post, Body, HttpCode, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
 import { LoginDto } from '../dto/login.dto'
+import { ForgotPasswordDto, ResetPasswordDto } from '../dto/password-reset.dto'
 import { ApiLogin } from '../decorators/swagger-decorators'
-import { ApiRegister } from './auth.swagger'
+import { ApiRegister, ApiForgotPassword, ApiResetPassword } from './auth.swagger'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { RolesGuard } from './roles.guard'
@@ -28,5 +29,28 @@ export class AuthController {
   @ApiRegister()
   async register(@Body() dto: CreateUserDto) {
     return this.authService.register(dto)
+  }
+
+  @Post('register-petowner-by-receptionist')
+  @HttpCode(201)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('receptionist', 'semas')
+  @ApiRegister()
+  async registerPetOwnerByReceptionist(@Body() dto: CreateUserDto) {
+    return this.authService.registerPetOwnerByReceptionist(dto)
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  @ApiForgotPassword()
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto)
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @ApiResetPassword()
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto)
   }
 }

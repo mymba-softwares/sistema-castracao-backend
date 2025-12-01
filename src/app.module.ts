@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TokenModule } from './token/token.module';
 import { AuthModule } from './auth/auth.module';
+import { EmailModule } from './email/email.module';
 import { PetOwnerModule } from './pet-owner/pet-owner.module';
 import { AnimalsModule } from './animals/animals.module';
 import { VeterinarianModule } from './veterinarian/veterinarian.module';

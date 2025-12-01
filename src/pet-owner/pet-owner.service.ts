@@ -21,6 +21,7 @@ export class PetOwnerService {
             completeName: true,
             cpf: true,
             email: true,
+            phone: true,
           },
         },
         _count: {

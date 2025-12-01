@@ -106,16 +106,18 @@
   }
 
   model User {
-    id              Int      @id @default(autoincrement())
-    role            Role
-    email           String   @unique
-    hashedPassword  String
-    completeName    String
-    cpf             String   @unique // Used for login for all users
-    phone           String   // Essential for notifications
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
-    recoveryMode    Boolean  @default(false)
+    id                    Int       @id @default(autoincrement())
+    role                  Role
+    email                 String    @unique
+    hashedPassword        String
+    completeName          String
+    cpf                   String    @unique // Used for login for all users
+    phone                 String    // Essential for notifications
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+    recoveryMode          Boolean   @default(false)
+    passwordResetToken    String?   @unique
+    passwordResetExpires  DateTime?
 
     // Relations
     tokens          Token[]
@@ -178,8 +180,10 @@
     id        Int     @id @default(autoincrement())
     userId    Int     @unique
     crmv      String? @unique // Regional Council of Veterinary Medicine
-    specialty String? // Especialidade do veterinário
+    specialty String? 
     active    Boolean @default(true)
+    enrollment String?
+
 
     // Relations
     user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -265,8 +269,58 @@
     // Surgery Fields (RF03.3)
     surgeryType     SurgeryType?        // Type of procedure performed
     
+    // === ANIMAL DATA (complementary) ===
+    animalName      String?             // Animal name
+    breed           String?             // Breed
+    age             String?             // Age
+    coat            String?             // Coat/fur color
+    weight          String?             // Weight
+    size            String?             // Size/build
+    
+    // === OWNER DATA ===
+    ownerName       String?             // Owner name
+    ownerPhone      String?             // Phone number
+    ownerAddress    String?             // Full address
+    ownerNumber     String?             // House number
+    ownerNeighborhood String?           // Neighborhood
+    ownerCity       String?             // City
+    ownerReference  String?             // Reference point
+    
+    // === SERVICE TYPE ===
+    clinicalGuidance      Boolean?      // Clinical guidance
+    returnVisit           Boolean?      // Return visit
+    consultation          Boolean?      // Consultation
+    treatmentChange       Boolean?      // Treatment change
+    
+    // === HISTORY (ANAMNESIS) ===
+    anamnesis       String?             // Current history, previous treatment, background
+    vaccinations    String?             // Vaccinations given
+    vaccinationDate String?             // Vaccination dates
+    deworming       String?             // Deworming history
+    
+    // === CLINICAL EXAMINATION - VITAL SIGNS ===
+    rectalTemp      String?             // Rectal temperature (°C)
+    heartRate       String?             // Heart rate (/min)
+    respiratoryRate String?             // Respiratory rate (/min)
+    pulse           String?             // Pulse (/min)
+    
+    // === CLINICAL EXAMINATION - SPECIFIC SYSTEMS ===
+    ectoscopy       String?             // General condition, mucous membranes, skin, lymph nodes
+    abdominalCavity String?             // Shape, content, stomach, liver
+    headAndNeck     String?             // Ears, eyes, nose, mouth
+    nervousSystem   String?             // Behavior, reflexes, paralysis
+    thoracicCavity  String?             // Palpation, percussion, auscultation
+    locomotorSystem String?             // Bones and joints
+    
+    // === DIAGNOSIS AND PROGNOSIS ===
+    provisionalDiagnosis    String?     // Provisional diagnosis
+    complementaryExams      String?     // Complementary exams
+    definitiveDiagnosis     String?     // Definitive diagnosis
+    prognosis              String?     // Prognosis
+    
     observations    String?             // General field for veterinarian notes
     instructions    String?             // Field for prescriptions/instructions (RF06.3)
+    additionalNotes String?             // Additional observations / Free description
 
     // Relations
     medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)

@@ -42,6 +42,10 @@ export class CreateUserDto {
   nis?: string;
 
   @IsOptional()
+  @IsString()
+  enrollment?: string;
+
+  @IsOptional()
   @IsBoolean()
   active?: boolean;
 }
