@@ -9,8 +9,8 @@ import { EmailService } from '../email/email.service'
 import { LoginDto } from '../dto/login.dto'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { ForgotPasswordDto, ResetPasswordDto } from '../dto/password-reset.dto'
-import { Role, Veterinarian, PetOwner } from '@prisma/client'
-import { cpf } from 'cpf-cnpj-validator'
+import { Role, Veterinarian, PetOwner, PetOwnerType } from '@prisma/client'
+import { cpf, cnpj } from 'cpf-cnpj-validator'
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -45,9 +45,29 @@ export class AuthService {
       throw new BadRequestException('Senha deve ter ao menos 6 caracteres')
     }
 
-    if (!cpf.isValid(dto.cpf)) {
-    throw new BadRequestException('CPF inválido')
-  }
+    if (dto.role === Role.petOwner && dto.petOwnerType === PetOwnerType.ngo) {
+      if (!dto.cnpj) {
+        throw new BadRequestException('CNPJ é obrigatório para ONGs')
+      }
+      if (!cnpj.isValid(dto.cnpj)) {
+        throw new BadRequestException('CNPJ inválido')
+      }
+      const existingByCnpj = await this.prisma.user.findUnique({ where: { cnpj: dto.cnpj } })
+      if (existingByCnpj) {
+        throw new ConflictException('CNPJ já cadastrado')
+      }
+    } else {
+      if (!dto.cpf) {
+        throw new BadRequestException('CPF é obrigatório')
+      }
+      if (!cpf.isValid(dto.cpf)) {
+        throw new BadRequestException('CPF inválido')
+      }
+      const existingByCpf = await this.prisma.user.findUnique({ where: { cpf: dto.cpf } })
+      if (existingByCpf) {
+        throw new ConflictException('CPF já cadastrado')
+      }
+    }
 
     if (!Object.values(Role).includes(dto.role)) {
       throw new BadRequestException('Role inválida')
@@ -58,23 +78,11 @@ export class AuthService {
       throw new ConflictException('Email já cadastrado')
     }
 
-    const existingByCpf = await this.userService.findByCpf(dto.cpf)
-    if (existingByCpf) {
-      throw new ConflictException('CPF já cadastrado')
-    }
-
     return true
   }
 
   async register(dto: CreateUserDto) {
-  
     await this.validateRegisterData(dto);
-    const existingUser = await this.prisma.user.findFirst({
-      where: { OR: [{ email: dto.email }, { cpf: dto.cpf }] },
-    });
-    if (existingUser) {
-      throw new ConflictException('User with this email or CPF already exists');
-    }
 
     let user;
     let relatedEntity: any = null;
@@ -110,11 +118,13 @@ export class AuthService {
           throw new BadRequestException('Endereço é obrigatório para responsáveis');
         }
 
+        const ownerType = dto.petOwnerType || PetOwnerType.individual;
         const hashedPasswordOwner = await bcrypt.hash(dto.password, 10);
         user = await this.prisma.user.create({
           data: {
             email: dto.email,
-            cpf: dto.cpf,
+            cpf: ownerType === PetOwnerType.individual ? dto.cpf : null,
+            cnpj: ownerType === PetOwnerType.ngo ? dto.cnpj : null,
             phone: dto.phone,
             completeName: dto.completeName,
             hashedPassword: hashedPasswordOwner,
@@ -126,6 +136,7 @@ export class AuthService {
         relatedEntity = await this.petOwnerService.createPetOwner(user.id, {
           fullAddress: dto.address,
           nis: dto.nis,
+          type: ownerType,
         });
         break;
 
@@ -185,22 +196,18 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    // Sempre retorna sucesso para não expor se o email existe
     if (!user) {
       return {
         message: 'Se o email existir no sistema, você receberá instruções de recuperação',
       };
     }
 
-    // Gera token único e seguro
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    // Token expira em 1 hora
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
-    // Salva token no banco
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -209,7 +216,6 @@ export class AuthService {
       },
     });
 
-    // Envia email (token não hasheado)
     try {
       await this.emailService.sendPasswordResetEmail(
         user.email,
@@ -227,14 +233,13 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    // Hash do token recebido para comparar com o banco
     const hashedToken = crypto.createHash('sha256').update(dto.token).digest('hex');
 
     const user = await this.prisma.user.findFirst({
       where: {
         passwordResetToken: hashedToken,
         passwordResetExpires: {
-          gt: new Date(), // Token ainda válido
+          gt: new Date(), 
         },
       },
     });
@@ -243,12 +248,10 @@ export class AuthService {
       throw new BadRequestException('Token inválido ou expirado');
     }
 
-    // Valida nova senha
     if (dto.newPassword.length < 6) {
       throw new BadRequestException('Senha deve ter ao menos 6 caracteres');
     }
 
-    // Atualiza senha e limpa token
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
     await this.prisma.user.update({
@@ -261,7 +264,6 @@ export class AuthService {
       },
     });
 
-    // Envia email de confirmação
     try {
       await this.emailService.sendPasswordResetSuccessEmail(
         user.email,
@@ -269,7 +271,6 @@ export class AuthService {
       );
     } catch (error) {
       console.error('Erro ao enviar email de confirmação:', error);
-      // Não falha se o email de confirmação falhar
     }
 
     return {

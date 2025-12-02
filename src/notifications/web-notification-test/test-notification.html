@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Firebase Notifications</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .token-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        h3 {
+            margin-top: 30px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Test Firebase Notifications</h1>
+        
+        <div id="status"></div>
+        
+        <h3>1. Configure Firebase</h3>
+        <p>Cole sua configuração do Firebase aqui:</p>
+        <textarea id="firebaseConfig" rows="10" style="width: 100%; font-family: monospace; padding: 10px;">
+{
+  "apiKey": "AIzaSyDlt1gO4DBMB54U-BRlkFP1rHMCcQWbrpM",
+  "authDomain": "unipet-78d6a.firebaseapp.com",
+  "projectId": "unipet-78d6a",
+  "storageBucket": "unipet-78d6a.firebasestorage.app",
+  "messagingSenderId": "1010741787276",
+  "appId": "1:1010741787276:web:47e62be5dcc3b3e49559a9",
+  "measurementId": "G-8KKVEKN3C1"
+}
+        </textarea>
+        
+        <label for="vapidKey"><strong>VAPID Key (Web Push Certificate):</strong></label>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">
+            Obtenha em: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
+        </p>
+        <input type="text" id="vapidKey" placeholder="Cole o VAPID Key aqui (começa com B...)">
+        
+        <button onclick="initializeFirebase()">Initialize Firebase</button>
+        
+        <h3>2. Get FCM Token</h3>
+        <button id="getTokenBtn" onclick="getToken()" disabled>Request Notification Permission & Get Token</button>
+        
+        <div id="tokenDisplay"></div>
+        
+        <h3>3. Login (Get JWT Token)</h3>
+        <p>Faça login para obter o token JWT:</p>
+        
+        <label>Email:</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com">
+        
+        <label>Password:</label>
+        <input type="password" id="loginPassword" placeholder="sua senha">
+        
+        <button onclick="doLogin()">Login</button>
+        
+        <div id="loginResponse"></div>
+        
+        <h3>4. Test Notification via API</h3>
+        <p>Use o token acima para testar com sua API:</p>
+        
+        <label>API Base URL:</label>
+        <input type="text" id="apiUrl" value="http://localhost:3000/api" placeholder="http://localhost:3000/api">
+        
+        <label>JWT Token (faça login primeiro):</label>
+        <input type="text" id="jwtToken" placeholder="Bearer eyJhbGciOiJIUzI1NiIs...">
+        
+        <label>User ID:</label>
+        <input type="number" id="userId" placeholder="1">
+        
+        <h4>📝 Customize Notification Content</h4>
+        <label>Title:</label>
+        <input type="text" id="customTitle" placeholder="Custom notification title">
+        
+        <label>Message:</label>
+        <textarea id="customMessage" rows="3" placeholder="Custom notification message"></textarea>
+        
+        <label>Metadata (JSON):</label>
+        <textarea id="customMetadata" rows="3" placeholder='{"key": "value", "screen": "AppointmentDetails"}'>{}</textarea>
+        
+        <h4>Device Management</h4>
+        <button onclick="registerDevice()">1. Register Device</button>
+        <button onclick="removeDevice()">2. Remove Device</button>
+        
+        <h4>Send Notifications</h4>
+        <button onclick="createNotification()">3. Create Notification (DB only)</button>
+        <button onclick="sendTestNotification()">4. Send Push Notification</button>
+        <button onclick="sendByRole()">5. Send by Role (Topic)</button>
+        <button onclick="sendToTopic()">6. Send to Custom Topic</button>
+        
+        <h4>Topic Management</h4>
+        <label>Topic Name:</label>
+        <input type="text" id="topicName" placeholder="news" style="width: 200px; display: inline-block;">
+        <button onclick="subscribeToTopic()">7. Subscribe to Topic</button>
+        <button onclick="unsubscribeFromTopic()">8. Unsubscribe from Topic</button>
+        
+        <h4>Read Notifications</h4>
+        <button onclick="getUserNotifications()">9. Get User Notifications</button>
+        <button onclick="getUnreadCount()">10. Get Unread Count</button>
+        
+        <h4>Mark as Read</h4>
+        <label>Notification IDs (comma separated):</label>
+        <input type="text" id="notificationIds" placeholder="1,2,3" style="width: 200px; display: inline-block;">
+        <button onclick="markAsRead()">11. Mark Specific as Read</button>
+        <button onclick="markAllAsRead()">12. Mark All as Read</button>
+        
+        <h4>Send Push from Existing</h4>
+        <label>Notification ID:</label>
+        <input type="number" id="sendPushNotificationId" placeholder="1" style="width: 100px; display: inline-block;">
+        <button onclick="sendPushFromExisting()">15. Send Push from Existing Notification</button>
+        
+        <h4>Delete Notifications</h4>
+        <label>Notification ID to Delete:</label>
+        <input type="number" id="deleteNotificationId" placeholder="1" style="width: 100px; display: inline-block;">
+        <button onclick="deleteNotification()">13. Delete Notification</button>
+        <button onclick="deleteAllRead()">14. Delete All Read</button>
+        
+        <div id="apiResponse"></div>
+    </div>
+
+    <script>
+        let messaging;
+        let currentToken = null;
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+
+        function getCustomContent(defaultTitle, defaultMessage) {
+            const customTitle = document.getElementById('customTitle').value.trim();
+            const customMessage = document.getElementById('customMessage').value.trim();
+            const customMetadataStr = document.getElementById('customMetadata').value.trim();
+            
+            let metadata = { timestamp: new Date().toISOString() };
+            
+            // Parse custom metadata if provided
+            if (customMetadataStr && customMetadataStr !== '{}') {
+                try {
+                    const parsed = JSON.parse(customMetadataStr);
+                    metadata = { ...metadata, ...parsed };
+                } catch (e) {
+                    showStatus('⚠️ Invalid JSON in metadata, using default', 'error');
+                }
+            }
+            
+            return {
+                title: customTitle || defaultTitle,
+                message: customMessage || defaultMessage,
+                metadata: metadata
+            };
+        }
+
+        async function initializeFirebase() {
+            try {
+                const configText = document.getElementById('firebaseConfig').value;
+                const firebaseConfig = JSON.parse(configText);
+                
+                showStatus('⏳ Registering Service Worker...', 'info');
+                
+                // Registrar Service Worker primeiro
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    console.log('Service Worker registered:', registration);
+                    showStatus('⏳ Initializing Firebase...', 'info');
+                    
+                    // Aguardar um pouco para o SW estar pronto
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } else {
+                    throw new Error('Service Worker not supported in this browser');
+                }
+                
+                firebase.initializeApp(firebaseConfig);
+                messaging = firebase.messaging();
+                
+                // Listener para mensagens em foreground
+                messaging.onMessage((payload) => {
+                    console.log('Message received:', payload);
+                    showStatus(`
+                        <strong>📨 Notification Received!</strong><br>
+                        Title: ${payload.notification?.title || 'N/A'}<br>
+                        Body: ${payload.notification?.body || 'N/A'}<br>
+                        Data: ${JSON.stringify(payload.data)}
+                    `, 'success');
+                    
+                    // Mostrar notificação do browser
+                    if (payload.notification) {
+                        new Notification(payload.notification.title, {
+                            body: payload.notification.body,
+                            icon: payload.notification.icon
+                        });
+                    }
+                });
+                
+                document.getElementById('getTokenBtn').disabled = false;
+                showStatus('✅ Firebase initialized successfully! Service Worker ready.', 'success');
+            } catch (error) {
+                console.error('Init error:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function getToken() {
+            try {
+                showStatus('⏳ Requesting notification permission...', 'info');
+                console.log('Requesting permission...');
+                
+                const permission = await Notification.requestPermission();
+                console.log('Permission result:', permission);
+                
+                if (permission === 'granted') {
+                    showStatus('⏳ Getting FCM token...', 'info');
+                    
+                    const vapidKey = document.getElementById('vapidKey').value.trim();
+                    
+                    if (!vapidKey) {
+                        showStatus('⚠️ VAPID Key is required! Get it from Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates', 'error');
+                        return;
+                    }
+                    
+                    console.log('Getting token with VAPID key...');
+                    currentToken = await messaging.getToken({
+                        vapidKey: vapidKey
+                    });
+                    
+                    console.log('Token received:', currentToken);
+                    
+                    if (currentToken) {
+                        document.getElementById('tokenDisplay').innerHTML = `
+                            <div class="status success">
+                                <strong>✅ FCM Token obtained!</strong>
+                                <div class="token-box">${currentToken}</div>
+                                <button onclick="copyToken()">Copy Token</button>
+                            </div>
+                        `;
+                        showStatus('✅ Token received! You can now test notifications.', 'success');
+                    } else {
+                        showStatus('❌ No registration token available. Try refreshing the page.', 'error');
+                    }
+                } else if (permission === 'denied') {
+                    showStatus('❌ Notification permission DENIED! You need to enable it in your browser settings.', 'error');
+                    console.error('Permission denied');
+                } else {
+                    showStatus('⚠️ Notification permission dismissed.', 'error');
+                    console.log('Permission dismissed');
+                }
+            } catch (error) {
+                console.error('Error getting token:', error);
+                showStatus(`❌ Error getting token: ${error.message}<br><br>
+                    <strong>Common issues:</strong><br>
+                    1. VAPID key missing or invalid<br>
+                    2. Firebase not initialized<br>
+                    3. Browser doesn't support notifications<br>
+                    4. Service Worker not registered<br><br>
+                    Check the browser console (F12) for more details.`, 'error');
+            }
+        }
+
+        function copyToken() {
+            navigator.clipboard.writeText(currentToken);
+            showStatus('✅ Token copied to clipboard!', 'success');
+        }
+
+        async function doLogin() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showStatus('❌ Preencha email e senha!', 'error');
+                return;
+            }
+
+            try {
+                showStatus('⏳ Fazendo login...', 'info');
+                
+                const response = await fetch(`${apiUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const token = `Bearer ${data.accessToken}`;
+                    document.getElementById('jwtToken').value = token;
+                    
+                    // Preencher userId se vier na resposta
+                    if (data.user?.id) {
+                        document.getElementById('userId').value = data.user.id;
+                    }
+                    
+                    document.getElementById('loginResponse').innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Login successful!</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                            <p>Token copiado para o campo JWT Token!</p>
+                        </div>
+                    `;
+                    showStatus('✅ Login realizado com sucesso!', 'success');
+                } else {
+                    document.getElementById('loginResponse').innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Login failed:</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    showStatus('❌ Falha no login. Verifique as credenciais.', 'error');
+                }
+            } catch (error) {
+                document.getElementById('loginResponse').innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+                showStatus('❌ Erro de rede. Verifique se a API está rodando.', 'error');
+            }
+        }
+
+        async function registerDevice() {
+            if (!currentToken) {
+                showStatus('❌ Get FCM token first!', 'error');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/register-device`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        userId: parseInt(userId),
+                        fcmToken: currentToken,
+                        deviceName: 'Test Browser',
+                        platform: 'web'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('apiResponse').innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Device registered!</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('apiResponse').innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Error:</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('apiResponse').innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function sendTestNotification() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        userId: parseInt(userId),
+                        title: '🎉 Test Notification',
+                        message: 'This is a test notification from web!',
+                        metadata: {
+                            test: true,
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('apiResponse').innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Notification sent!</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('apiResponse').innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Error:</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('apiResponse').innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function removeDevice() {
+            if (!currentToken) {
+                showStatus('❌ Get FCM token first!', 'error');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/device/${userId}/${encodeURIComponent(currentToken)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '2. Remove Device');
+            } catch (error) {
+                showError(error, '2. Remove Device');
+            }
+        }
+
+        async function createNotification() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+            
+            const customContent = getCustomContent('📝 Notification Created', 'This notification is saved in database only (no push)');
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        userId: parseInt(userId),
+                        title: customContent.title,
+                        message: customContent.message,
+                        metadata: customContent.metadata
+                    })
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '3. Create Notification');
+            } catch (error) {
+                showError(error, '3. Create Notification');
+            }
+        }
+
+        async function sendTestNotification() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+            
+            const customContent = getCustomContent('🔔 Push Notification', 'This is a real push notification sent to your device!');
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/send-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        userIds: [parseInt(userId)],
+                        title: customContent.title,
+                        body: customContent.message,
+                        data: customContent.metadata
+                    })
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '4. Send Push Notification');
+            } catch (error) {
+                showError(error, '4. Send Push Notification');
+            }
+        }
+
+        async function sendByRole() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+
+            const role = prompt('Enter role (administrator, veterinarian, receptionist, petOwner, semas):', 'petOwner');
+            if (!role) return;
+            
+            const customContent = getCustomContent('👥 Role Notification', `This notification was sent to all users with role: ${role}`);
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/send-by-role`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        role: role,
+                        title: customContent.title,
+                        message: customContent.message,
+                        metadata: customContent.metadata
+                    })
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '5. Send by Role');
+            } catch (error) {
+                showError(error, '5. Send by Role');
+            }
+        }
+
+        async function sendToTopic() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const topicName = document.getElementById('topicName').value || 'news';
+            
+            const customContent = getCustomContent('📢 Topic Notification', `This was sent to topic: ${topicName}`);
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/topics/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        topic: topicName,
+                        title: customContent.title,
+                        body: customContent.message,
+                        data: customContent.metadata
+                    })
+                });
+
+                if (response.ok) {
+                    showResult(true, { message: 'Notificação enviada para o tópico com sucesso!' }, '6. Send to Topic');
+                } else {
+                    const data = await response.json();
+                    showResult(false, data, '6. Send to Topic');
+                }
+            } catch (error) {
+                showError(error, '6. Send to Topic');
+            }
+        }
+
+        async function subscribeToTopic() {
+            if (!currentToken) {
+                showStatus('❌ Get FCM token first!', 'error');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const topicName = document.getElementById('topicName').value || 'news';
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/topics/subscribe`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        fcmToken: currentToken,
+                        topics: [topicName]
+                    })
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '7. Subscribe to Topic');
+            } catch (error) {
+                showError(error, '7. Subscribe to Topic');
+            }
+        }
+
+        async function unsubscribeFromTopic() {
+            if (!currentToken) {
+                showStatus('❌ Get FCM token first!', 'error');
+                return;
+            }
+
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const topicName = document.getElementById('topicName').value || 'news';
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/topics/unsubscribe`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        fcmToken: currentToken,
+                        topics: [topicName]
+                    })
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '8. Unsubscribe from Topic');
+            } catch (error) {
+                showError(error, '8. Unsubscribe from Topic');
+            }
+        }
+
+        async function getUserNotifications() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/user/${userId}?onlyUnread=false`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '9. Get User Notifications');
+            } catch (error) {
+                showError(error, '9. Get User Notifications');
+            }
+        }
+
+        async function getUnreadCount() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/user/${userId}/unread-count`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '10. Get Unread Count');
+            } catch (error) {
+                showError(error, '10. Get Unread Count');
+            }
+        }
+
+        async function markAsRead() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const notificationIds = document.getElementById('notificationIds').value;
+
+            if (!notificationIds) {
+                showStatus('❌ Enter notification IDs!', 'error');
+                return;
+            }
+
+            const ids = notificationIds.split(',').map(id => parseInt(id.trim()));
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/mark-as-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken
+                    },
+                    body: JSON.stringify({
+                        notificationIds: ids
+                    })
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '11. Mark as Read');
+            } catch (error) {
+                showError(error, '11. Mark as Read');
+            }
+        }
+
+        async function markAllAsRead() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/user/${userId}/mark-all-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '12. Mark All as Read');
+            } catch (error) {
+                showError(error, '12. Mark All as Read');
+            }
+        }
+
+        async function sendPushFromExisting() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const notificationId = document.getElementById('sendPushNotificationId').value;
+
+            if (!notificationId) {
+                showStatus('❌ Enter notification ID!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/${notificationId}/send-push`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '15. Send Push from Existing');
+            } catch (error) {
+                showError(error, '15. Send Push from Existing');
+            }
+        }
+
+        async function deleteNotification() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const notificationId = document.getElementById('deleteNotificationId').value;
+
+            if (!notificationId) {
+                showStatus('❌ Enter notification ID!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/${notificationId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '13. Delete Notification');
+            } catch (error) {
+                showError(error, '13. Delete Notification');
+            }
+        }
+
+        async function deleteAllRead() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value;
+            const userId = document.getElementById('userId').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/notifications/user/${userId}/read`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                const data = await response.json();
+                showResult(response.ok, data, '14. Delete All Read');
+            } catch (error) {
+                showError(error, '14. Delete All Read');
+            }
+        }
+
+        function showResult(success, data, operation) {
+            if (success) {
+                document.getElementById('apiResponse').innerHTML = `
+                    <div class="status success">
+                        <strong>✅ ${operation} - Success!</strong>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                showStatus(`✅ ${operation} completed successfully!`, 'success');
+            } else {
+                document.getElementById('apiResponse').innerHTML = `
+                    <div class="status error">
+                        <strong>❌ ${operation} - Error:</strong>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                showStatus(`❌ ${operation} failed!`, 'error');
+            }
+        }
+
+        function showError(error, operation) {
+            document.getElementById('apiResponse').innerHTML = `
+                <div class="status error">
+                    <strong>❌ ${operation} - Network Error:</strong> ${error.message}
+                </div>
+            `;
+            showStatus(`❌ ${operation} - Network error!`, 'error');
+        }
+    </script>
+</body>
+</html>

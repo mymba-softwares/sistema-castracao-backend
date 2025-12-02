@@ -16,10 +16,12 @@ export class PetOwnerService {
         userId: true,
         fullAddress: true,
         nis: true,
+        type: true,
         user: {
           select: {
             completeName: true,
             cpf: true,
+            cnpj: true,
             email: true,
             phone: true,
           },
@@ -39,11 +41,13 @@ export class PetOwnerService {
         userId: true,
         fullAddress: true,
         nis: true,
+        type: true,
         user: {
           select: {
             completeName: true,
             email: true,
             cpf: true,
+            cnpj: true,
             phone: true,
           },
         },
@@ -68,12 +72,13 @@ export class PetOwnerService {
         userId: true,
         fullAddress: true,
         nis: true,
+        type: true,
         user: {
           select: {
             id: true,
             completeName: true,
-            email: true,
             cpf: true,
+            cnpj: true,
             phone: true,
           },
         },
@@ -95,7 +100,7 @@ export class PetOwnerService {
       where: { userId: userId },
       include: {
         user: {
-          select: { email: true, completeName: true, phone: true, cpf: true },
+          select: { email: true, completeName: true, phone: true, cpf: true, cnpj: true },
         },
         animals: true,
         commitmentTerms: true,
@@ -139,6 +144,7 @@ export class PetOwnerService {
         userId,
         fullAddress: dto.fullAddress,
         nis: dto.nis,
+        type: dto.type || 'individual',
       },
       include: {
         user: {
@@ -147,6 +153,7 @@ export class PetOwnerService {
             completeName: true,
             email: true,
             cpf: true,
+            cnpj: true,
             phone: true,
             role: true,
           },

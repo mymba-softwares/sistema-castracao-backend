@@ -36,6 +36,20 @@ export class AppointmentService {
             },
           },
         },
+        veterinarian: {
+          select: {
+            id: true,
+            crmv: true,
+            specialty: true,
+            user: {
+              select: {
+                completeName: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         startTime: 'asc',
@@ -64,6 +78,20 @@ export class AppointmentService {
                 email: true,
                 phone: true,
                 cpf: true,
+              },
+            },
+          },
+        },
+        veterinarian: {
+          select: {
+            id: true,
+            crmv: true,
+            specialty: true,
+            user: {
+              select: {
+                completeName: true,
+                email: true,
+                phone: true,
               },
             },
           },
@@ -185,6 +213,16 @@ export class AppointmentService {
       throw new NotFoundException('Pet owner not found');
     }
 
+    if (createAppointmentDto.veterinarianId) {
+      const veterinarian = await this.prisma.veterinarian.findUnique({
+        where: { id: createAppointmentDto.veterinarianId },
+      });
+
+      if (!veterinarian) {
+        throw new NotFoundException(`Veterinarian with ID ${createAppointmentDto.veterinarianId} not found`);
+      }
+    }
+
     if (animal.petOwnerId !== createAppointmentDto.petOwnerId) {
       throw new ConflictException('Animal does not belong to this pet owner');
     }
@@ -196,7 +234,7 @@ export class AppointmentService {
       throw new ConflictException('Start time must be before end time');
     }
 
-    const conflictingAppointment = await this.prisma.appointment.findFirst({
+    const conflictingAnimalAppointment = await this.prisma.appointment.findFirst({
       where: {
         animalId: createAppointmentDto.animalId,
         status: {
@@ -225,8 +263,52 @@ export class AppointmentService {
       },
     });
 
-    if (conflictingAppointment) {
+    if (conflictingAnimalAppointment) {
       throw new ConflictException('There is already an appointment for this animal at this time');
+    }
+
+    if (createAppointmentDto.veterinarianId) {
+      const conflictingVetAppointment = await this.prisma.appointment.findFirst({
+        where: {
+          veterinarianId: createAppointmentDto.veterinarianId,
+          status: {
+            notIn: [AppointmentStatus.canceled, AppointmentStatus.absent],
+          },
+          OR: [
+            {
+              AND: [
+                { startTime: { lte: startTime } },
+                { endTime: { gt: startTime } },
+              ],
+            },
+            {
+              AND: [
+                { startTime: { lt: endTime } },
+                { endTime: { gte: endTime } },
+              ],
+            },
+            {
+              AND: [
+                { startTime: { gte: startTime } },
+                { endTime: { lte: endTime } },
+              ],
+            },
+          ],
+        },
+        include: {
+          animal: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (conflictingVetAppointment) {
+        throw new ConflictException(
+          `This veterinarian already has an appointment scheduled at this time (with ${conflictingVetAppointment.animal.name})`
+        );
+      }
     }
 
     try {
@@ -234,6 +316,7 @@ export class AppointmentService {
         data: {
           animalId: createAppointmentDto.animalId,
           petOwnerId: createAppointmentDto.petOwnerId,
+          veterinarianId: createAppointmentDto.veterinarianId,
           startTime: startTime,
           endTime: endTime,
           serviceType: createAppointmentDto.serviceType,
@@ -260,6 +343,20 @@ export class AppointmentService {
               },
             },
           },
+          veterinarian: {
+            select: {
+              id: true,
+              crmv: true,
+              specialty: true,
+              user: {
+                select: {
+                  completeName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -276,13 +373,96 @@ export class AppointmentService {
       throw new NotFoundException('Appointment not found');
     }
 
-    // Validar startTime e endTime se ambos forem fornecidos
-    if (updateAppointmentDto.startTime && updateAppointmentDto.endTime) {
-      const startTime = new Date(updateAppointmentDto.startTime);
-      const endTime = new Date(updateAppointmentDto.endTime);
+    if (updateAppointmentDto.startTime || updateAppointmentDto.endTime) {
+      const newStartTime = updateAppointmentDto.startTime 
+        ? new Date(updateAppointmentDto.startTime) 
+        : appointment.startTime;
+      const newEndTime = updateAppointmentDto.endTime 
+        ? new Date(updateAppointmentDto.endTime) 
+        : appointment.endTime;
 
-      if (startTime >= endTime) {
+      if (newStartTime >= newEndTime) {
         throw new ConflictException('Start time must be before end time');
+      }
+
+      const conflictingAnimalAppointment = await this.prisma.appointment.findFirst({
+        where: {
+          id: { not: id },
+          animalId: appointment.animalId,
+          status: {
+            notIn: [AppointmentStatus.canceled, AppointmentStatus.absent],
+          },
+          OR: [
+            {
+              AND: [
+                { startTime: { lte: newStartTime } },
+                { endTime: { gt: newStartTime } },
+              ],
+            },
+            {
+              AND: [
+                { startTime: { lt: newEndTime } },
+                { endTime: { gte: newEndTime } },
+              ],
+            },
+            {
+              AND: [
+                { startTime: { gte: newStartTime } },
+                { endTime: { lte: newEndTime } },
+              ],
+            },
+          ],
+        },
+      });
+
+      if (conflictingAnimalAppointment) {
+        throw new ConflictException('There is already an appointment for this animal at this time');
+      }
+
+      const veterinarianId = updateAppointmentDto.veterinarianId ?? appointment.veterinarianId;
+      if (veterinarianId) {
+        const conflictingVetAppointment = await this.prisma.appointment.findFirst({
+          where: {
+            id: { not: id },
+            veterinarianId: veterinarianId,
+            status: {
+              notIn: [AppointmentStatus.canceled, AppointmentStatus.absent],
+            },
+            OR: [
+              {
+                AND: [
+                  { startTime: { lte: newStartTime } },
+                  { endTime: { gt: newStartTime } },
+                ],
+              },
+              {
+                AND: [
+                  { startTime: { lt: newEndTime } },
+                  { endTime: { gte: newEndTime } },
+                ],
+              },
+              {
+                AND: [
+                  { startTime: { gte: newStartTime } },
+                  { endTime: { lte: newEndTime } },
+                ],
+              },
+            ],
+          },
+          include: {
+            animal: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        });
+
+        if (conflictingVetAppointment) {
+          throw new ConflictException(
+            `This veterinarian already has an appointment scheduled at this time (with ${conflictingVetAppointment.animal.name})`
+          );
+        }
       }
     }
 
@@ -292,6 +472,7 @@ export class AppointmentService {
       serviceType,
       status,
       notes,
+      veterinarianId,
     } = updateAppointmentDto;
 
     const appointmentDataToUpdate: any = {};
@@ -301,6 +482,7 @@ export class AppointmentService {
     if (serviceType) appointmentDataToUpdate.serviceType = serviceType;
     if (status) appointmentDataToUpdate.status = status;
     if (notes !== undefined) appointmentDataToUpdate.notes = notes;
+    if (veterinarianId !== undefined) appointmentDataToUpdate.veterinarianId = veterinarianId;
 
     try {
       await this.prisma.appointment.update({

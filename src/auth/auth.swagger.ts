@@ -16,23 +16,30 @@ export function ApiRegister() {
     ApiBearerAuth('access-token'),
     ApiOperation({ 
       summary: 'Register a new user in the system',
-      description: 'Creates a new user with role-specific data. Administrators can register users with any role. For veterinarians, CRMV is required. For students, enrollment is required. For pet owners, address is required. Receptionist, administrator, and semas roles only create a basic user without additional entities.'
+      description: 'Creates a new user with role-specific data. Administrators, receptionists, and SEMAS can register users. For veterinarians, CRMV is required. For students, enrollment is required. For pet owners, address is required and type (individual or ngo) can be specified. If petOwnerType is "ngo", CNPJ is required instead of CPF.'
     }),
     ApiBody({
       description: 'User registration data',
       schema: {
         type: 'object',
-        required: ['completeName', 'email', 'password', 'cpf', 'role'],
+        required: ['completeName', 'email', 'password', 'role'],
         properties: {
           completeName: { type: 'string', example: 'João Silva' },
           email: { type: 'string', format: 'email', example: 'joao.silva@example.com' },
           password: { type: 'string', minLength: 6, example: 'senha123' },
-          cpf: { type: 'string', example: '05064734069' },
+          cpf: { type: 'string', example: '05064734069', description: 'Required for individuals (veterinarians, students, admins, etc)' },
+          cnpj: { type: 'string', example: '12345678000190', description: 'Required for pet owners with type "ngo"' },
           phone: { type: 'string', example: '81999998888' },
           role: { 
             type: 'string', 
             enum: ['administrator', 'semas', 'veterinarian', 'receptionist', 'petOwner', 'student'],
             example: 'veterinarian'
+          },
+          petOwnerType: { 
+            type: 'string', 
+            enum: ['individual', 'ngo'], 
+            example: 'individual',
+            description: 'Type of pet owner - individual (pessoa física with CPF) or ngo (ONG with CNPJ). Only for petOwner role.'
           },
           crmv: { type: 'string', example: 'CRMV-PE12345', description: 'Required for veterinarians' },
           specialty: { type: 'string', example: 'Cirurgia Veterinária', description: 'Optional for veterinarians and students' },
@@ -57,8 +64,8 @@ export function ApiRegister() {
             active: true,
           },
         },
-        petOwner: {
-          summary: 'Register pet owner',
+        petOwnerIndividual: {
+          summary: 'Register pet owner (individual)',
           value: {
             completeName: 'Carlos Oliveira',
             email: 'carlos@example.com',
@@ -66,8 +73,22 @@ export function ApiRegister() {
             cpf: '89852605020',
             phone: '81988887777',
             role: 'petOwner',
+            petOwnerType: 'individual',
             address: 'Rua das Flores, 456 - Recife/PE',
             nis: '12345678901',
+          },
+        },
+        petOwnerNgo: {
+          summary: 'Register pet owner (NGO)',
+          value: {
+            completeName: 'ONG Proteção Animal',
+            email: 'contato@ongprotecao.org',
+            password: 'senha123',
+            cnpj: '12345678000190',
+            phone: '81988887777',
+            role: 'petOwner',
+            petOwnerType: 'ngo',
+            address: 'Av. Principal, 789 - Recife/PE',
           },
         },
         student: {

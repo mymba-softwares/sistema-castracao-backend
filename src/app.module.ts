@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { EmailModule } from './email/email.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -15,9 +15,11 @@ import { ClinicalRecordModule } from './clinical-record/clinical-record.module';
 import { MedicalRecordModule } from './medical-record/medical-record.module';
 import { SurgicalRecordModule } from './surgical-record/surgical-record.module';
 import { AnestheticRecordModule } from './anesthetic-record/anesthetic-record.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     UserModule, 
     PrismaModule, 
     TokenModule, 
@@ -31,6 +33,7 @@ import { AnestheticRecordModule } from './anesthetic-record/anesthetic-record.mo
     MedicalRecordModule,
     SurgicalRecordModule,
     AnestheticRecordModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

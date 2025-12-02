@@ -105,15 +105,21 @@
     audit // To track who did what
   }
 
+  enum PetOwnerType {
+    individual
+    ngo
+  }
+
   model User {
     id                    Int       @id @default(autoincrement())
     role                  Role
     email                 String    @unique
     hashedPassword        String
     completeName          String
-    cpf                   String    @unique // Used for login for all users
-    phone                 String    // Essential for notifications
-    registered            Boolean   @default(false) // Completes registration in auth
+    cpf                   String?   @unique
+    cnpj                  String?   @unique
+    phone                 String
+    registered            Boolean   @default(false)
     createdAt             DateTime  @default(now())
     updatedAt             DateTime  @updatedAt
     recoveryMode          Boolean   @default(false)
@@ -150,10 +156,11 @@
   // Specific data for the animal's owner.
   // The address is geocoded to generate the heatmap.
   model PetOwner {
-    id          Int     @id @default(autoincrement())
-    userId      Int     @unique
-    fullAddress String  // Source for RF08
-    nis         String? // Número de Identificação Social (opcional)
+    id          Int           @id @default(autoincrement())
+    userId      Int           @unique
+    type        PetOwnerType  @default(individual)
+    fullAddress String
+    nis         String?
 
     // Relations
     user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -187,8 +194,9 @@
 
 
     // Relations
-    user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-    clinicalRecords ClinicalRecord[]
+    user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    appointments       Appointment[]
+    clinicalRecords    ClinicalRecord[]
     anesthetistRecords AnestheticRecord[] @relation("AnesthetistRecords")
     surgeonRecords     AnestheticRecord[] @relation("SurgeonRecords")
 
@@ -215,22 +223,26 @@
   }
 
   model Appointment {
-    id          Int               @id @default(autoincrement())
-    animalId    Int
-    petOwnerId  Int
-    serviceType ServiceType?
-    startTime   DateTime // Exact date and time of the appointment
-    endTime     DateTime // End date and time
-    status      AppointmentStatus @default(scheduled)
-    createdAt   DateTime          @default(now())
-    updatedAt   DateTime          @updatedAt
-    notes       String?           // Observations by the owner when scheduling
+    id                    Int               @id @default(autoincrement())
+    animalId              Int
+    petOwnerId            Int
+    veterinarianId        Int?
+    serviceType           ServiceType?
+    startTime             DateTime
+    endTime               DateTime
+    status                AppointmentStatus @default(scheduled)
+    createdAt             DateTime          @default(now())
+    updatedAt             DateTime          @updatedAt
+    notes                 String?
+    oneWeekReminderSent   Boolean           @default(false)
+    oneDayReminderSent    Boolean           @default(false)
 
     // Relations
-    animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
-    petOwner        PetOwner         @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
-    clinicalRecords ClinicalRecord[]
-    surgicalRecords SurgicalRecord[]
+    animal            Animal             @relation(fields: [animalId], references: [id], onDelete: Cascade)
+    petOwner          PetOwner           @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
+    veterinarian      Veterinarian?      @relation(fields: [veterinarianId], references: [id], onDelete: SetNull)
+    clinicalRecords   ClinicalRecord[]
+    surgicalRecords   SurgicalRecord[]
     anestheticRecords AnestheticRecord[]
 
     @@map("appointments")
