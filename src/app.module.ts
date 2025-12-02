@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -12,9 +13,28 @@ import { VeterinarianModule } from './veterinarian/veterinarian.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { ClinicalRecordModule } from './clinical-record/clinical-record.module';
 import { MedicalRecordModule } from './medical-record/medical-record.module';
+import { SurgicalRecordModule } from './surgical-record/surgical-record.module';
+import { AnestheticRecordModule } from './anesthetic-record/anesthetic-record.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, TokenModule, AuthModule, EmailModule, PetOwnerModule, AnimalsModule, VeterinarianModule, AppointmentModule, ClinicalRecordModule, MedicalRecordModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    UserModule, 
+    PrismaModule, 
+    TokenModule, 
+    AuthModule, 
+    EmailModule, 
+    PetOwnerModule, 
+    AnimalsModule, 
+    VeterinarianModule, 
+    AppointmentModule, 
+    ClinicalRecordModule, 
+    MedicalRecordModule,
+    SurgicalRecordModule,
+    AnestheticRecordModule,
+    NotificationsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

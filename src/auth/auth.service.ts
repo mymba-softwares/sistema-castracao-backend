@@ -9,8 +9,8 @@ import { EmailService } from '../email/email.service'
 import { LoginDto } from '../dto/login.dto'
 import { CreateUserDto } from '../dto/create-user.dto'
 import { ForgotPasswordDto, ResetPasswordDto } from '../dto/password-reset.dto'
-import { Role, Veterinarian, PetOwner } from '@prisma/client'
-import { cpf } from 'cpf-cnpj-validator'
+import { Role, Veterinarian, PetOwner, PetOwnerType } from '@prisma/client'
+import { cpf, cnpj } from 'cpf-cnpj-validator'
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -45,9 +45,29 @@ export class AuthService {
       throw new BadRequestException('Senha deve ter ao menos 6 caracteres')
     }
 
-    if (!cpf.isValid(dto.cpf)) {
-    throw new BadRequestException('CPF inválido')
-  }
+    if (dto.role === Role.petOwner && dto.petOwnerType === PetOwnerType.ngo) {
+      if (!dto.cnpj) {
+        throw new BadRequestException('CNPJ é obrigatório para ONGs')
+      }
+      if (!cnpj.isValid(dto.cnpj)) {
+        throw new BadRequestException('CNPJ inválido')
+      }
+      const existingByCnpj = await this.prisma.user.findUnique({ where: { cnpj: dto.cnpj } })
+      if (existingByCnpj) {
+        throw new ConflictException('CNPJ já cadastrado')
+      }
+    } else {
+      if (!dto.cpf) {
+        throw new BadRequestException('CPF é obrigatório')
+      }
+      if (!cpf.isValid(dto.cpf)) {
+        throw new BadRequestException('CPF inválido')
+      }
+      const existingByCpf = await this.prisma.user.findUnique({ where: { cpf: dto.cpf } })
+      if (existingByCpf) {
+        throw new ConflictException('CPF já cadastrado')
+      }
+    }
 
     if (!Object.values(Role).includes(dto.role)) {
       throw new BadRequestException('Role inválida')
@@ -58,23 +78,11 @@ export class AuthService {
       throw new ConflictException('Email já cadastrado')
     }
 
-    const existingByCpf = await this.userService.findByCpf(dto.cpf)
-    if (existingByCpf) {
-      throw new ConflictException('CPF já cadastrado')
-    }
-
     return true
   }
 
   async register(dto: CreateUserDto) {
-  
     await this.validateRegisterData(dto);
-    const existingUser = await this.prisma.user.findFirst({
-      where: { OR: [{ email: dto.email }, { cpf: dto.cpf }] },
-    });
-    if (existingUser) {
-      throw new ConflictException('User with this email or CPF already exists');
-    }
 
     let user;
     let relatedEntity: any = null;
@@ -94,86 +102,93 @@ export class AuthService {
             completeName: dto.completeName,
             hashedPassword: hashedPasswordVet,
             role: dto.role,
+            registered: true,
           },
         });
 
-        relatedEntity = await this.veterinarianService.createVeterinarian(user.id, {
-          crmv: dto.crmv,
-          specialty: dto.specialty,
-          active: true,
-        });
-        break;
+      relatedEntity = await this.veterinarianService.createVeterinarian(user.id, {
+        crmv: dto.crmv,
+        specialty: dto.specialty,
+        active: true,
+      });
+      break;
 
       case Role.petOwner:
         if (!dto.address) {
           throw new BadRequestException('Endereço é obrigatório para responsáveis');
         }
 
+        const ownerType = dto.petOwnerType || PetOwnerType.individual;
         const hashedPasswordOwner = await bcrypt.hash(dto.password, 10);
         user = await this.prisma.user.create({
           data: {
             email: dto.email,
-            cpf: dto.cpf,
+            cpf: ownerType === PetOwnerType.individual ? dto.cpf : null,
+            cnpj: ownerType === PetOwnerType.ngo ? dto.cnpj : null,
             phone: dto.phone,
             completeName: dto.completeName,
             hashedPassword: hashedPasswordOwner,
             role: dto.role,
+            registered: true,
           },
         });
 
         relatedEntity = await this.petOwnerService.createPetOwner(user.id, {
           fullAddress: dto.address,
           nis: dto.nis,
+          type: ownerType,
         });
         break;
 
-      case Role.administrator:
-      case Role.receptionist:
-      case Role.semas:
-        const hashedPasswordDefault = await bcrypt.hash(dto.password, 10);
-        user = await this.prisma.user.create({
-          data: {
-            email: dto.email,
-            cpf: dto.cpf,
-            phone: dto.phone,
-            completeName: dto.completeName,
-            hashedPassword: hashedPasswordDefault,
-            role: dto.role,
-          },
-        });
-        relatedEntity = null;
-        break;
+    case Role.administrator:
+    case Role.receptionist:
+    case Role.semas:
+      const hashedPasswordDefault = await bcrypt.hash(dto.password, 10);
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          cpf: dto.cpf,
+          phone: dto.phone,
+          completeName: dto.completeName,
+          hashedPassword: hashedPasswordDefault,
+          role: dto.role,
+          registered: true,
+        },
+      });
+      relatedEntity = null;
+      break;
 
-      case Role.student:
-        if (!dto.enrollment) {
-          throw new BadRequestException('Matrícula é obrigatória para estudantes');
-        }
+    case Role.student:
+      if (!dto.enrollment) {
+        throw new BadRequestException('Matrícula é obrigatória para estudantes');
+      }
 
-        const hashedPasswordStudent = await bcrypt.hash(dto.password, 10);
-        user = await this.prisma.user.create({
-          data: {
-            email: dto.email,
-            cpf: dto.cpf,
-            phone: dto.phone,
-            completeName: dto.completeName,
-            hashedPassword: hashedPasswordStudent,
-            role: dto.role,
-          },
-        });
+      const hashedPasswordStudent = await bcrypt.hash(dto.password, 10);
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          cpf: dto.cpf,
+          phone: dto.phone,
+          completeName: dto.completeName,
+          hashedPassword: hashedPasswordStudent,
+          role: dto.role,
+          registered: true,
+        },
+      });
 
-        relatedEntity = await this.veterinarianService.createVeterinarian(user.id, {
-          specialty: dto.specialty,
-          enrollment: dto.enrollment,
-          active: true,
-        });
-        break;
+      relatedEntity = await this.veterinarianService.createVeterinarian(user.id, {
+        specialty: dto.specialty,
+        enrollment: dto.enrollment,
+        active: true,
+      });
+      break;
 
-      default:
-        throw new BadRequestException('Role inválida');
-    }
+    default:
+      throw new BadRequestException('Role inválida');
+  }
 
-    const { hashedPassword: _, ...safeUser } = user;
-    return { ...safeUser, related: relatedEntity };
+  const { hashedPassword: _, ...safeUser } = user;
+  return { ...safeUser, related: relatedEntity };
 }
 
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -261,39 +276,5 @@ export class AuthService {
     return {
       message: 'Senha redefinida com sucesso',
     };
-  }
-
-  async registerPetOwnerByReceptionist(dto: CreateUserDto) {
-    await this.validateRegisterData(dto);
-    const existingUser = await this.prisma.user.findFirst({
-      where: { OR: [{ email: dto.email }, { cpf: dto.cpf }] },
-    });
-    if (existingUser) {
-      throw new ConflictException('User with this email or CPF already exists');
-    }
-
-    let user;
-    let relatedEntity: any = null;
-
-    if (!dto.address) {
-      throw new BadRequestException('Endereço é obrigatório para responsáveis');
-    }
-
-    const hashedPasswordOwner = await bcrypt.hash(dto.password, 10);
-    user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        cpf: dto.cpf,
-        phone: dto.phone,
-        completeName: dto.completeName,
-        hashedPassword: hashedPasswordOwner,
-        role: dto.role,
-      },
-    });
-
-    relatedEntity = await this.petOwnerService.createPetOwner(user.id, {
-      fullAddress: dto.address,
-      nis: dto.nis,
-    });
   }
 }

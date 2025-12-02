@@ -17,6 +17,15 @@ export class CreateAppointmentDto {
     @IsNumber()
     @IsNotEmpty()
     petOwnerId: number;
+
+    @ApiProperty({
+      description: 'ID do veterinário designado para o atendimento (opcional). Pode ser atribuído na criação ou posteriormente via atualização.',
+      required: false,
+      example: 1,
+    })
+    @IsNumber()
+    @IsOptional()
+    veterinarianId?: number;
     
     @ApiProperty({
       description: 'Data e hora de início do agendamento.',

@@ -57,6 +57,32 @@
     ovariohysterectomy // Female
   }
 
+  enum AsaClassification {
+    ASA_I
+    ASA_II
+    ASA_III
+    ASA_IV
+    ASA_V
+  }
+
+  enum AnestheticRisk {
+    mild      // Leve
+    moderate  // Moderado
+    high      // Alto
+  }
+
+  enum RecoveryQuality {
+    rapidSmooth        // Rápida/Suave
+    slow               // Lenta
+    agitatedExcitement // Agitada/Excitação
+    vocalizationPain   // Vocalização/Dor
+  }
+
+  enum MedicationPhase {
+    MPA      // Medicação Pré-Anestésica
+    INDUCTION // Indução Anestésica
+  }
+
   enum NotificationChannel {
     push     // Notification via App
     email    // Messaging service
@@ -79,14 +105,21 @@
     audit // To track who did what
   }
 
+  enum PetOwnerType {
+    individual
+    ngo
+  }
+
   model User {
     id                    Int       @id @default(autoincrement())
     role                  Role
     email                 String    @unique
     hashedPassword        String
     completeName          String
-    cpf                   String    @unique // Used for login for all users
-    phone                 String    // Essential for notifications
+    cpf                   String?   @unique
+    cnpj                  String?   @unique
+    phone                 String
+    registered            Boolean   @default(false)
     createdAt             DateTime  @default(now())
     updatedAt             DateTime  @updatedAt
     recoveryMode          Boolean   @default(false)
@@ -123,10 +156,11 @@
   // Specific data for the animal's owner.
   // The address is geocoded to generate the heatmap.
   model PetOwner {
-    id          Int     @id @default(autoincrement())
-    userId      Int     @unique
-    fullAddress String  // Source for RF08
-    nis         String? // Número de Identificação Social (opcional)
+    id          Int           @id @default(autoincrement())
+    userId      Int           @unique
+    type        PetOwnerType  @default(individual)
+    fullAddress String
+    nis         String?
 
     // Relations
     user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -160,8 +194,11 @@
 
 
     // Relations
-    user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-    clinicalRecords ClinicalRecord[]
+    user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    appointments       Appointment[]
+    clinicalRecords    ClinicalRecord[]
+    anesthetistRecords AnestheticRecord[] @relation("AnesthetistRecords")
+    surgeonRecords     AnestheticRecord[] @relation("SurgeonRecords")
 
     @@map("veterinarians")
   }
@@ -186,21 +223,27 @@
   }
 
   model Appointment {
-    id          Int               @id @default(autoincrement())
-    animalId    Int
-    petOwnerId  Int
-    serviceType ServiceType?
-    startTime   DateTime // Exact date and time of the appointment
-    endTime     DateTime // End date and time
-    status      AppointmentStatus @default(scheduled)
-    createdAt   DateTime          @default(now())
-    updatedAt   DateTime          @updatedAt
-    notes       String?           // Observations by the owner when scheduling
+    id                    Int               @id @default(autoincrement())
+    animalId              Int
+    petOwnerId            Int
+    veterinarianId        Int?
+    serviceType           ServiceType?
+    startTime             DateTime
+    endTime               DateTime
+    status                AppointmentStatus @default(scheduled)
+    createdAt             DateTime          @default(now())
+    updatedAt             DateTime          @updatedAt
+    notes                 String?
+    oneWeekReminderSent   Boolean           @default(false)
+    oneDayReminderSent    Boolean           @default(false)
 
     // Relations
-    animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
-    petOwner        PetOwner         @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
-    clinicalRecords ClinicalRecord[]
+    animal            Animal             @relation(fields: [animalId], references: [id], onDelete: Cascade)
+    petOwner          PetOwner           @relation(fields: [petOwnerId], references: [id], onDelete: Cascade)
+    veterinarian      Veterinarian?      @relation(fields: [veterinarianId], references: [id], onDelete: SetNull)
+    clinicalRecords   ClinicalRecord[]
+    surgicalRecords   SurgicalRecord[]
+    anestheticRecords AnestheticRecord[]
 
     @@map("appointments")
   }
@@ -218,6 +261,8 @@
     // Relations
     animal          Animal           @relation(fields: [animalId], references: [id], onDelete: Cascade)
     clinicalRecords ClinicalRecord[]
+    surgicalRecords SurgicalRecord[]
+    anestheticRecords AnestheticRecord[]
 
     @@map("medicalRecords")
   }
@@ -296,6 +341,155 @@
     veterinarian  Veterinarian  @relation(fields: [veterinarianId], references: [id], onDelete: Restrict)
 
     @@map("clinicalRecords")
+  }
+
+  // Surgical Record (Ficha Cirúrgica)
+  model SurgicalRecord {
+    id              Int      @id @default(autoincrement())
+    medicalRecordId Int
+    appointmentId   Int?
+    recordNumber    String?  // Registro Nº
+    recordDate      DateTime @default(now()) // Data
+    
+    // === PATIENT AND OWNER IDENTIFICATION ===
+    animalName      String?  // Nome do Animal
+    species         String?  // Espécie
+    breed           String?  // Raça
+    coat            String?  // Pelagem
+    size            String?  // Porte
+    gender          String?  // Sexo
+    age             String?  // Idade
+    weight          String?  // Peso
+    ownerName       String?  // Tutor
+    ownerPhone      String?  // Fone
+    ownerAddress    String?  // Endereço
+    
+    // === OPERATION REPORT (TEAM AND TIME) ===
+    surgeon         String?  // Cirurgião
+    firstAssistant  String?  // 1º Assistente
+    secondAssistant String?  // 2º Assistente
+    instrumentator  String?  // Instrumentador
+    anesthetist     String?  // Anestesista
+    duration        String?  // Duração
+    surgeryStart    DateTime? // Ato Cirúrgico - Início
+    surgeryEnd      DateTime? // Ato Cirúrgico - Fim
+    
+    // === DIAGNOSES AND PROCEDURES ===
+    preoperativeDiagnosis  String? // Diagnóstico Pré-Operatório
+    postoperativeDiagnosis String? // Diagnóstico Pós-Operatório
+    proposedOperation      String? // Operação Proposta
+    performedOperation     String? // Operação Realizada
+    
+    // === DETAILS AND POST-OPERATIVE ===
+    materialsUsed          String? @db.Text // Materiais Utilizados
+    postoperativeControl   String? @db.Text // Controle Pós-Cirúrgico / Alta Cirúrgica
+    operationDescription   String? @db.Text // Descrição do Ato Operatório
+    
+    // === OTHER ===
+    additionalObservations String? @db.Text // Observações Adicionais / Intercorrências
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    // Relations
+    medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+    appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+    
+    @@map("surgicalRecords")
+  }
+
+  // Anesthetic Record (Ficha Anestésica) - Main table
+  model AnestheticRecord {
+    id              Int      @id @default(autoincrement())
+    medicalRecordId Int
+    appointmentId   Int?
+    
+    // === HEADER AND IDENTIFICATION ===
+    animalName      String?  // Nome do Animal
+    species         String?  // Espécie
+    breed           String?  // Raça
+    weight          String?  // Peso
+    age             String?  // Idade
+    procedure       String?  // Procedimento
+    anesthetistId   Int?     // Anestesista (veterinarian)
+    surgeonId       Int?     // Cirurgião (veterinarian)
+    
+    // === RISK ASSESSMENT ===
+    asaClassification AsaClassification? // ASA I, II, III, IV, V
+    anestheticRisk    AnestheticRisk?    // Leve, Moderado, Alto
+    
+    // === PRE-ANESTHETIC EVALUATION (VITAL SIGNS) ===
+    preHeartRate        String? // FC - Frequência Cardíaca
+    preRespiratoryRate  String? // fR - Frequência Respiratória
+    preMucousMembranes  String? // Mucosas
+    preCapillaryRefill  String? // TPC - Tempo de Preenchimento Capilar
+    preTemperature      String? // Temp - Temperatura
+    comorbidities       String? @db.Text // Comorbidades
+    allergies           String? @db.Text // Alergias
+    
+    // === AIRWAY ===
+    intubation          Boolean? // Intubação (Sim/Não)
+    tubeNumber          String?  // Sonda Nº
+    circuit             String?  // Circuito
+    
+    // === MAINTENANCE TYPE ===
+    maintenanceInhalation Boolean @default(false) // Inalatória
+    maintenanceTIVA       Boolean @default(false) // TIVA
+    
+    // === RECOVERY AND POST-OPERATIVE ===
+    extubationTime         DateTime? // Hora Extubação
+    recoveryQuality        RecoveryQuality? // Qualidade da Recuperação
+    postoperativeMedication String? @db.Text // Medicação Pós-Cirúrgica
+    generalObservations     String? @db.Text // Observações Gerais / Intercorrências
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    // Relations
+    medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+    appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+    anesthetist   Veterinarian? @relation("AnesthetistRecords", fields: [anesthetistId], references: [id], onDelete: SetNull)
+    surgeon       Veterinarian? @relation("SurgeonRecords", fields: [surgeonId], references: [id], onDelete: SetNull)
+    medications   AnestheticMedication[]
+    monitoring    AnestheticMonitoring[]
+    
+    @@map("anestheticRecords")
+  }
+
+  // Anesthetic Medications (MPA and Induction) - 1:N relationship
+  model AnestheticMedication {
+    id                  Int      @id @default(autoincrement())
+    anestheticRecordId  Int
+    phase               MedicationPhase // MPA ou INDUCTION
+    drugName            String   // Fármaco
+    dosage              String   // Dose
+    route               String   // Via
+    administrationTime  String   // Hora
+    
+    // Relations
+    anestheticRecord AnestheticRecord @relation(fields: [anestheticRecordId], references: [id], onDelete: Cascade)
+    
+    @@map("anestheticMedications")
+  }
+
+  // Anesthetic Monitoring (temporal grid) - 1:N relationship
+  model AnestheticMonitoring {
+    id                  Int      @id @default(autoincrement())
+    anestheticRecordId  Int
+    measurementTime     String   // Hora
+    agent               String?  // Agente
+    heartRate           String?  // FC - Frequência Cardíaca
+    respiratoryRate     String?  // fR - Frequência Respiratória
+    spo2                String?  // SpO2 - Saturação
+    etco2               String?  // EtCO2
+    systolicPressure    String?  // PAS - Pressão Sistólica
+    diastolicPressure   String?  // PAD - Pressão Diastólica
+    temperature         String?  // Temp
+    
+    // Relations
+    anestheticRecord AnestheticRecord @relation(fields: [anestheticRecordId], references: [id], onDelete: Cascade)
+    
+    @@map("anestheticMonitoring")
   }
 
   model UserDevice {
