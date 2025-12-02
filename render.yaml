@@ -6,7 +6,7 @@ services:
     plan: free
     branch: main
     buildCommand: npm install --legacy-peer-deps && npm run build
-    startCommand: npm run start:prod
+    startCommand: pwd && ls -la && ls -la dist && node --max-old-space-size=512 dist/main.js
     envVars:
       - key: NODE_VERSION
         value: 22.16.0
