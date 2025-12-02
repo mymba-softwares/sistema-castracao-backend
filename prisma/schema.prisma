@@ -113,6 +113,7 @@
     completeName          String
     cpf                   String    @unique // Used for login for all users
     phone                 String    // Essential for notifications
+    registered            Boolean   @default(false) // Completes registration in auth
     createdAt             DateTime  @default(now())
     updatedAt             DateTime  @updatedAt
     recoveryMode          Boolean   @default(false)

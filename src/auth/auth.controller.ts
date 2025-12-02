@@ -25,19 +25,10 @@ export class AuthController {
   @Post('register')
   @HttpCode(201)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('administrator')
+  @Roles('administrator', 'receptionist', 'semas')
   @ApiRegister()
   async register(@Body() dto: CreateUserDto) {
     return this.authService.register(dto)
-  }
-
-  @Post('register-petowner-by-receptionist')
-  @HttpCode(201)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('receptionist', 'semas')
-  @ApiRegister()
-  async registerPetOwnerByReceptionist(@Body() dto: CreateUserDto) {
-    return this.authService.registerPetOwnerByReceptionist(dto)
   }
 
   @Post('forgot-password')
