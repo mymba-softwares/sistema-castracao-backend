@@ -194,7 +194,6 @@ export class EmailService {
       return data;
     } catch (error) {
       console.error('Erro ao enviar email de confirmação:', error);
-      // Não falha se o email de confirmação falhar
     }
   }
 }

@@ -12,6 +12,8 @@ async function bootstrap() {
       'http://localhost:3000', // Desenvolvimento local (React/Next.js)
       'http://localhost:3001', // Desenvolvimento local (alternativo)
       'http://127.0.0.1:3000', // Desenvolvimento local (alternativo)
+      'http://localhost:8080', // Servidor de testes HTML
+      'http://127.0.0.1:8080', // Servidor de testes HTML (alternativo)
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],

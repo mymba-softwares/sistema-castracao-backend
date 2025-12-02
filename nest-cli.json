@@ -4,6 +4,13 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "outputPath": "dist"
+    "outputPath": "dist",
+    "assets": [
+      {
+        "include": "**/*.json",
+        "exclude": "**/tsconfig*.json",
+        "watchAssets": true
+      }
+    ]
   }
 }

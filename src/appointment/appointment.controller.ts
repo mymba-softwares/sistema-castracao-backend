@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException, UseGuards } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
+import { AppointmentNotificationsService } from './appointment-notifications.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { AppointmentStatus, $Enums } from '@prisma/client';
@@ -21,11 +22,17 @@ import { Roles } from '../decorators/role-decorator';
 @Controller('appointment')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AppointmentController {
-  constructor(private readonly appointmentService: AppointmentService) {}
+  constructor(
+    private readonly appointmentService: AppointmentService,
+    private readonly appointmentNotificationsService: AppointmentNotificationsService,
+  ) {}
 
   @Post()
   @Roles($Enums.Role.administrator, $Enums.Role.receptionist, $Enums.Role.petOwner)
-  @ApiOperation({ summary: 'Create a new appointment' })
+  @ApiOperation({ 
+    summary: 'Create a new appointment',
+    description: 'Creates a new appointment for an animal. Can optionally assign a veterinarian to the appointment. Veterinarian can be assigned later via update.'
+  })
   @ApiCreatedResponse('Appointment')
   @ApiInternalServerErrorResponse()
   create(@Body() createAppointmentDto: CreateAppointmentDto) {
@@ -34,7 +41,10 @@ export class AppointmentController {
 
   @Get()
   @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist)
-  @ApiOperation({ summary: 'Get all appointments' })
+  @ApiOperation({ 
+    summary: 'Get all appointments',
+    description: 'Returns all appointments with animal, pet owner, and assigned veterinarian information.'
+  })
   @ApiOkResponse('Appointments')
   @ApiInternalServerErrorResponse()
   findAll() {
@@ -80,7 +90,10 @@ export class AppointmentController {
 
   @Get(':id')
   @Roles($Enums.Role.administrator, $Enums.Role.semas, $Enums.Role.veterinarian, $Enums.Role.receptionist, $Enums.Role.petOwner)
-  @ApiOperation({ summary: 'Get appointment by ID' })
+  @ApiOperation({ 
+    summary: 'Get appointment by ID',
+    description: 'Returns detailed appointment information including animal, pet owner, assigned veterinarian, and related clinical records.'
+  })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse('Appointment')
   @ApiNotFoundResponse('Appointment')
@@ -92,7 +105,10 @@ export class AppointmentController {
 
   @Patch(':id')
   @Roles($Enums.Role.administrator, $Enums.Role.veterinarian, $Enums.Role.receptionist, $Enums.Role.petOwner)
-  @ApiOperation({ summary: 'Update an appointment' })
+  @ApiOperation({ 
+    summary: 'Update an appointment',
+    description: 'Updates appointment details including date/time, status, notes, and assigned veterinarian. All fields are optional.'
+  })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse('Appointment')
   @ApiNotFoundResponse('Appointment')
@@ -126,5 +142,18 @@ export class AppointmentController {
     }
 
     return status as AppointmentStatus;
+  }
+
+  @Post('test-reminders')
+  @Roles($Enums.Role.administrator)
+  @ApiOperation({ 
+    summary: 'Test appointment reminders (Admin only)',
+    description: 'Manually triggers the appointment reminder check. Sends notifications for appointments 1 day and 1 week from now. For testing purposes only.'
+  })
+  @ApiOkResponse('Reminder test results')
+  @ApiUnauthorizedResponse()
+  @ApiForbiddenResponse()
+  async testReminders() {
+    return this.appointmentNotificationsService.checkAndSendReminders();
   }
 }

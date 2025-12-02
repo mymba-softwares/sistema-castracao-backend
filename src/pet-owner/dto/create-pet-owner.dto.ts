@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { PetOwnerType } from '@prisma/client';
 
 export class CreatePetOwnerDto {
     @ApiProperty({ description: 'Endereço completo.' })
@@ -16,4 +17,9 @@ export class CreatePetOwnerDto {
     @IsString()
     @IsOptional()
     documentUrl?: string;
+
+    @ApiProperty({ description: 'Tipo de responsável (individual ou ONG).', enum: PetOwnerType, default: PetOwnerType.individual })
+    @IsEnum(PetOwnerType)
+    @IsOptional()
+    type?: PetOwnerType;
 }
