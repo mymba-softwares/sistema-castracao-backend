@@ -31,6 +31,11 @@ if (!admin.apps.length) {
       serviceAccount = JSON.parse(serviceAccountJson);
     }
     
+    // Fix private_key: replace literal \n with actual newlines
+    if (serviceAccount.private_key && typeof serviceAccount.private_key === 'string') {
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
+    
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       projectId: projectId,
