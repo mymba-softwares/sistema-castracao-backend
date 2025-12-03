@@ -16,16 +16,19 @@ if (!admin.apps.length) {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   
   if (serviceAccountJson) {
-    // Production: Load from environment variable (JSON string)
-    // Support both plain JSON and base64 encoded JSON
+    // Production: Load from environment variable (JSON string or base64)
     let serviceAccount;
-    try {
-      // Try to parse as plain JSON first
-      serviceAccount = JSON.parse(serviceAccountJson);
-    } catch (e) {
-      // If that fails, try base64 decode then parse
+    
+    // Check if it looks like base64 (no spaces, brackets, or quotes at start)
+    const looksLikeBase64 = !/^[\s{"]/.test(serviceAccountJson);
+    
+    if (looksLikeBase64) {
+      // Decode from base64 first
       const decoded = Buffer.from(serviceAccountJson, 'base64').toString('utf-8');
       serviceAccount = JSON.parse(decoded);
+    } else {
+      // Try to parse as plain JSON
+      serviceAccount = JSON.parse(serviceAccountJson);
     }
     
     admin.initializeApp({
