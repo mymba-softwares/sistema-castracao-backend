@@ -12,32 +12,27 @@ if (!admin.apps.length) {
     );
   }
 
-  // Try to load from FIREBASE_SERVICE_ACCOUNT_JSON (for production/Render)
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  // Try to load from FIREBASE_PRIVATE_KEY (simpler approach for production)
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
   
-  if (serviceAccountJson) {
-    // Production: Load from environment variable (JSON string or base64)
-    let serviceAccount;
-    
-    // Check if it looks like base64 (no spaces, brackets, or quotes at start)
-    const looksLikeBase64 = !/^[\s{"]/.test(serviceAccountJson);
-    
-    if (looksLikeBase64) {
-      // Decode from base64 first
-      const decoded = Buffer.from(serviceAccountJson, 'base64').toString('utf-8');
-      serviceAccount = JSON.parse(decoded);
-    } else {
-      // Try to parse as plain JSON
-      serviceAccount = JSON.parse(serviceAccountJson);
-    }
-    
-    // Fix private_key: replace literal \n with actual newlines
-    if (serviceAccount.private_key && typeof serviceAccount.private_key === 'string') {
-      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-    }
+  if (privateKey) {
+    // Production: Use individual environment variables
+    const serviceAccount = {
+      type: 'service_account',
+      project_id: projectId,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+      private_key: privateKey.replace(/\\n/g, '\n'),
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID,
+      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: 'https://oauth2.googleapis.com/token',
+      auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+      universe_domain: 'googleapis.com'
+    };
     
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert(serviceAccount as any),
       projectId: projectId,
     });
   } else {
