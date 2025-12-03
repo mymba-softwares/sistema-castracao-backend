@@ -36,7 +36,7 @@ export class AnimalsController {
   }
 
   @Get()
-  @Roles(Role.administrator, Role.semas, Role.receptionist)
+  @Roles(Role.administrator, Role.semas, Role.receptionist, Role.veterinarian)
   @ApiOperation({
     summary: 'Get all animals',
   })
