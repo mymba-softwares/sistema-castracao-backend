@@ -33,35 +33,35 @@ export class SurgicalRecordController {
   constructor(private readonly surgicalRecordService: SurgicalRecordService) {}
 
   @Post()
-  @Roles(Role.veterinarian, Role.administrator)
+  @Roles(Role.veterinarian, Role.administrator, Role.student)
   @ApiCreateSurgicalRecord()
   create(@Body() createSurgicalRecordDto: CreateSurgicalRecordDto) {
     return this.surgicalRecordService.create(createSurgicalRecordDto);
   }
 
   @Get()
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetAllSurgicalRecords()
   findAll() {
     return this.surgicalRecordService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetSurgicalRecordById()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.surgicalRecordService.findOne(id);
   }
 
   @Get('medical-record/:medicalRecordId')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetSurgicalRecordsByMedicalRecord()
   findByMedicalRecord(@Param('medicalRecordId', ParseIntPipe) medicalRecordId: number) {
     return this.surgicalRecordService.findByMedicalRecord(medicalRecordId);
   }
 
   @Patch(':id')
-  @Roles(Role.veterinarian, Role.administrator)
+  @Roles(Role.veterinarian, Role.administrator, Role.student)
   @ApiUpdateSurgicalRecord()
   update(
     @Param('id', ParseIntPipe) id: number,
