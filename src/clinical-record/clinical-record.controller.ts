@@ -24,21 +24,21 @@ export class ClinicalRecordController {
   constructor(private readonly clinicalRecordService: ClinicalRecordService) {}
 
   @Post()
-  @Roles(Role.veterinarian, Role.administrator)
+  @Roles(Role.veterinarian, Role.administrator, Role.student)
   @ApiCreateClinicalRecord()
   create(@Body() dto: CreateClinicalRecordDto) {
     return this.clinicalRecordService.create(dto);
   }
 
   @Get()
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetAllClinicalRecords()
   findAll() {
     return this.clinicalRecordService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiParam({ name: 'id', description: 'Clinical record ID' })
   @ApiGetClinicalRecordById()
   findOne(@Param('id', ParseIntPipe) id: number) {
@@ -46,7 +46,7 @@ export class ClinicalRecordController {
   }
 
   @Get('medical-record/:medicalRecordId')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiParam({ name: 'medicalRecordId', description: 'Medical record ID' })
   @ApiGetClinicalRecordsByMedicalRecord()
   findByMedicalRecord(@Param('medicalRecordId', ParseIntPipe) medicalRecordId: number) {
@@ -54,7 +54,7 @@ export class ClinicalRecordController {
   }
 
   @Get('animal/:animalId')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiParam({ name: 'animalId', description: 'Animal ID' })
   @ApiGetClinicalRecordsByAnimal()
   findByAnimal(@Param('animalId', ParseIntPipe) animalId: number) {
@@ -62,7 +62,7 @@ export class ClinicalRecordController {
   }
 
   @Patch(':id')
-  @Roles(Role.veterinarian, Role.administrator)
+  @Roles(Role.veterinarian, Role.administrator, Role.student)
   @ApiParam({ name: 'id', description: 'Clinical record ID' })
   @ApiUpdateClinicalRecord()
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateClinicalRecordDto) {
