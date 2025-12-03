@@ -17,7 +17,16 @@ if (!admin.apps.length) {
   
   if (serviceAccountJson) {
     // Production: Load from environment variable (JSON string)
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    // Support both plain JSON and base64 encoded JSON
+    let serviceAccount;
+    try {
+      // Try to parse as plain JSON first
+      serviceAccount = JSON.parse(serviceAccountJson);
+    } catch (e) {
+      // If that fails, try base64 decode then parse
+      const decoded = Buffer.from(serviceAccountJson, 'base64').toString('utf-8');
+      serviceAccount = JSON.parse(decoded);
+    }
     
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
