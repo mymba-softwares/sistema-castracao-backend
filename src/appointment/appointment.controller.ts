@@ -28,7 +28,7 @@ export class AppointmentController {
   ) {}
 
   @Post()
-  @Roles($Enums.Role.administrator, $Enums.Role.receptionist, $Enums.Role.petOwner)
+  @Roles($Enums.Role.administrator, $Enums.Role.receptionist, $Enums.Role.petOwner, $Enums.Role.veterinarian)
   @ApiOperation({ 
     summary: 'Create a new appointment',
     description: 'Creates a new appointment for an animal. Can optionally assign a veterinarian to the appointment. Veterinarian can be assigned later via update.'
