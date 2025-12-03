@@ -40,28 +40,28 @@ export class AnestheticRecordController {
   }
 
   @Get()
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetAllAnestheticRecords()
   findAll() {
     return this.anestheticRecordService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetAnestheticRecordById()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.anestheticRecordService.findOne(id);
   }
 
   @Get('medical-record/:medicalRecordId')
-  @Roles(Role.veterinarian, Role.administrator, Role.receptionist)
+  @Roles(Role.veterinarian, Role.administrator, Role.receptionist, Role.student)
   @ApiGetAnestheticRecordsByMedicalRecord()
   findByMedicalRecord(@Param('medicalRecordId', ParseIntPipe) medicalRecordId: number) {
     return this.anestheticRecordService.findByMedicalRecord(medicalRecordId);
   }
 
   @Patch(':id')
-  @Roles(Role.veterinarian, Role.administrator)
+  @Roles(Role.veterinarian, Role.administrator, Role.student)
   @ApiUpdateAnestheticRecord()
   update(
     @Param('id', ParseIntPipe) id: number,
