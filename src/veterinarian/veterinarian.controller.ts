@@ -71,7 +71,7 @@ export class VeterinarianController {
   }
 
   @Get()
-  @Roles(Role.administrator)
+  @Roles(Role.administrator, Role.semas, Role.receptionist)
   @ApiOperation({ summary: 'Get all veterinarians' })
   @ApiOkResponse('Veterinarian')
   @ApiInternalServerErrorResponse()
