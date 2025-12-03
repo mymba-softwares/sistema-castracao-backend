@@ -124,17 +124,7 @@ export class ClinicalRecordService {
     }
 
     return this.prisma.clinicalRecord.create({
-      data: {
-        medicalRecordId: dto.medicalRecordId,
-        appointmentId: dto.appointmentId,
-        veterinarianId: dto.veterinarianId,
-        type: dto.type,
-        treatmentDate: dto.treatmentDate ? new Date(dto.treatmentDate) : new Date(),
-        fitForSurgery: dto.fitForSurgery,
-        surgeryType: dto.surgeryType,
-        observations: dto.observations,
-        instructions: dto.instructions,
-      },
+      data: dto,
       include: {
         medicalRecord: {
           include: {
